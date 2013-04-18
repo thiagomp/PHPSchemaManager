@@ -20,16 +20,19 @@ These are the required PHP libraries:
 
 Include the PHPSchemaManager library:
 ´´´php
+<?php
 require(PHPSchemaManager\PHPSchemaManager.php);
 ´´´
 
 Register the PHPSchemaManager's autoloader:
 ´´´php
+<?php
 \PHPSchemaManager\PHPSchemaManager::registerAutoload();
 ´´´
 
 Setup the connection to your database (change the parameters to connect in your server)
 ´´´php
+<?php
 // get the connection object
 $connection = new \PHPSchemaManager\Connection();
 
@@ -43,16 +46,18 @@ $connection->port = '3306';
 
 Get the manager instance
 ´´´php
+<?php
 $manager = \PHPSchemaManager\PHPSchemaManager::getManager($connection);
 ´´´
 
 Print tables from a Database in the screen (change the table name to you that exists in your database)
 ´´´php
+<?php
 echo $manager->hasSchema('test')->printTxt();
 ´´´
 
 You should see something like this
-´´´txt
+´´´
 Tables from test (1 tables found) [synced]
 table1 [synced]
   id: serial(10), NOT NULL,  [synced]
