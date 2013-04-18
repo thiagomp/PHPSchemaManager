@@ -1,0 +1,68 @@
+{
+  "phpschemamanagertest": {
+    "book": {
+      "columns": {
+        "id": {
+          "type": "serial",
+          "size": "10",
+          "allownull": "no",
+          "defaultvalue": ""
+        },
+        "title": {
+          "type": "varchar",
+          "size": "222",
+          "allownull": "no",
+          "defaultvalue": ""
+        },
+        "isbn": {
+          "type": "char",
+          "size": "11",
+          "allownull": "no",
+          "defaultvalue": ""
+        },
+        "language": {
+          "type": "char",
+          "size": "3",
+          "allownull": "no",
+          "defaultvalue": "en"
+        }
+      },
+
+      "keys": {
+        "primary": {
+          "type": "pk",
+          "columns": ["id"]
+        },
+        "wrongidx": {
+          "type": "regular",
+          "columns": ["title"]
+        }
+      }
+    },
+
+    "wrongtable": {
+      "columns": {
+        "id": {
+          "type": "serial",
+          "size": "10",
+          "allownull": "no",
+          "defaultvalue": ""
+        },
+        "wrongage": {
+          "type": "int",
+          "size": "4",
+          "allownull": "yes",
+          "defaultvalue": "null"
+        }
+      },
+
+      "keys": {
+        "primary": {
+          "type": "pk",
+          "columns": ["id"]
+        }
+      }
+    }
+
+  }
+}

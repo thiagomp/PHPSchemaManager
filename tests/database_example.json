@@ -1,0 +1,85 @@
+{
+"Library": {
+  "Book" : {
+    "columns" : {
+      "bookId" : {
+        "type": "serial",
+        "size": 10,
+        "null allowed": "no",
+        "default value": ""
+      },
+      
+      "title" : {
+        "type": "varchar",
+        "size": 100,
+        "null allowed": "no",
+        "default value": ""
+      },
+      
+      "ISBN" : {
+        "type": "char",
+        "size": 10,
+        "null allowed": "no",
+        "default value": ""
+      },
+      
+      "numberOfPages" : {
+        "type": "int",
+        "size": 5,
+        "null allowed": "yes",
+        "default value": "schemamanagernullvalue"
+      },
+      
+      "price": {
+        "type": "decimal",
+        "size": "9,2",
+        "null allowed": "yes",
+        "default value": ""
+      }
+    },
+    
+    "keys" : {
+      "PRIMARY": {
+        "type": "pk",
+        "columns": ["bookId"]
+      },
+      
+      "bookIsbnIdx": {
+        "type": "unique",
+        "columns": ["title", "ISBN"]
+      },
+      
+      "titleIdx": {
+        "type": "regular",
+        "columns": ["title"]
+      }
+    }
+  },
+  
+  "Author" : {
+    "columns" : {
+      "authorId" : {
+        "type": "serial",
+        "size": 10,
+        "null allowed": "no",
+        "default value": ""
+      },
+
+      "name" : {
+        "type": "varchar",
+        "size": 100,
+        "null allowed": "no",
+        "default value": ""
+      }
+    },
+    
+    "keys" : {
+      "PRIMARY": {
+        "type": "pk",
+        "columns": ["authorId"]
+      }
+    }
+  
+  }
+}
+}
