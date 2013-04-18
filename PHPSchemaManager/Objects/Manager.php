@@ -312,4 +312,21 @@ class Manager
   public function getIgnoredSchemas() {
     return $this->ignoreSchemas;
   }
+  
+  public function printTxt() {
+    $conn = $this->getConnection(self::DEFULTCONNECTION);
+    
+    $msg = $this->countSchemas() . " schemas were found in the connection '$conn' " .
+            "({$conn->username}@{$conn->hostname}:{$conn->port} [{$conn->dbms}])" . PHP_EOL;
+    foreach($this->getSchemas() as $schema) {
+      $msg .= "$schema ({$schema->countTables()} tables)" . PHP_EOL;
+    }
+    $msg .= str_repeat("-", 30) . PHP_EOL . PHP_EOL;
+    
+    return $msg;
+  }
+  
+  public function countSchemas() {
+    return count($this->getSchemas());
+  }
 }
