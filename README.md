@@ -21,7 +21,7 @@ These are the required PHP libraries:
 Include the PHPSchemaManager library:
 ```php
 <?php
-require(PHPSchemaManager\PHPSchemaManager.php);
+require('PHPSchemaManager\PHPSchemaManager.php');
 ```
 
 Register the PHPSchemaManager's autoloader:
@@ -69,6 +69,16 @@ table1 [synced]
   PRIMARY: pk (id) [synced]
 ------------------------------
 ```
+
+## TODO
+
+Items to be developed. Not necessarily in this order.  
+
+[] Create a driver to connect with mysqli extension  
+[] Create a driver to connect with PDO  
+[] Integrate with sqlite  
+[] Integrate with PostgreSQL  
+[] Get information from [Constraints](http://dev.mysql.com/doc/refman/5.0/en/create-table-foreign-keys.html)  
 
 ## Documentation
 
