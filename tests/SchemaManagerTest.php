@@ -6,7 +6,7 @@ class SchemaManagerTest
   
   /**
    *
-   * @var \PHPSchemaManager\PHPSchemaManager
+   * @var \PHPSchemaManager\Objects\Manager
    */
   protected $sm;
   protected $conn;
@@ -109,10 +109,12 @@ class SchemaManagerTest
     $wrongTable->addColumn($wrongAgeIdColumn);
     $wrongTable->addColumn($wrongAgeColumn);
     
+    
     // add tables to the schema
     $schema = new \PHPSchemaManager\Objects\Schema(self::DBTEST);
     $schema->addTable($bookTable);
     $schema->addTable($wrongTable);
+    
     
     // add the schema to the manager
     $this->sm->addSchema($schema);
@@ -141,6 +143,60 @@ class SchemaManagerTest
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Index', $this->sm->hasSchema(self::DBTEST)->hasTable('wrongTable')->hasIndex('PRIMARY'), "Failed to find index 'PRIMARY' in the table 'wrongTable' (direct)");
     $this->assertTrue($this->sm->hasSchema(self::DBTEST)->hasTable("book")->isSynced(), "The 'book' table should be synced (direct)");
     $this->assertTrue($this->sm->hasSchema(self::DBTEST)->hasTable("wrongTable")->isSynced(), "The 'wrongTable' table should be synced (direct)");    
+  }
+  
+  public function testReplaceTable() {
+    // create the table that will be duplicated
+    $duplicatedTable = new \PHPSchemaManager\Objects\Table('duplicatedTable');
+    
+    $duplicatedAColumn = new \PHPSchemaManager\Objects\Column('columnA');
+    $duplicatedAColumn->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    $duplicatedAColumn->setSize(9);
+    
+    $duplicatedBColumn = new \PHPSchemaManager\Objects\Column('columnB');
+    $duplicatedBColumn->setType(\PHPSchemaManager\Objects\Column::CHAR);
+    $duplicatedBColumn->setSize(3);
+    $duplicatedBColumn->setDefaultValue('B');
+    
+    $duplicatedCColumn = new \PHPSchemaManager\Objects\Column('columnC');
+    $duplicatedCColumn->setType(\PHPSchemaManager\Objects\Column::DECIMAL);
+    $duplicatedCColumn->setSize('3,2');
+    
+    $duplicatedTable->addColumn($duplicatedAColumn);
+    $duplicatedTable->addColumn($duplicatedBColumn);
+    $duplicatedTable->addColumn($duplicatedCColumn);
+    
+    $this->sm->hasSchema(self::DBTEST)->addTable($duplicatedTable);
+    $this->sm->flush();
+
+    // create the duplicated table
+    $duplicatedTable2 = new \PHPSchemaManager\Objects\Table('duplicatedTable');
+    
+    $duplicated2AColumn = new \PHPSchemaManager\Objects\Column('columnA');
+    $duplicated2AColumn->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    $duplicated2AColumn->setSize(10);
+    
+    $duplicated2BColumn = new \PHPSchemaManager\Objects\Column('columnB');
+    $duplicated2BColumn->setType(\PHPSchemaManager\Objects\Column::CHAR);
+    $duplicated2BColumn->setSize(3);
+    $duplicated2BColumn->setDefaultValue('B');
+    
+    $duplicatedTable2->addColumn($duplicated2AColumn);
+    $duplicatedTable2->addColumn($duplicated2BColumn);
+
+    $this->sm->hasSchema(self::DBTEST)->addTable($duplicatedTable2, TRUE);
+    $this->sm->flush();
+    
+    $this->assertEquals(2,
+            $this->sm->hasSchema(self::DBTEST)->hasTable('duplicatedTable')->countColumns(),
+            "After the replacement, 'duplicatedTable' was expected to have 2 Columns");
+    
+    $this->assertEquals(10,
+            $this->sm->hasSchema(self::DBTEST)->hasTable('duplicatedTable')->hasColumn('columnA')->getSize(),
+            "Column 'id' is expected to have its size configured to be 10");
+    
+    $this->sm->hasSchema(self::DBTEST)->dropTable('duplicatedTable');
+    $this->sm->flush();
   }
   
   /**

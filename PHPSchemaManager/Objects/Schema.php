@@ -114,7 +114,7 @@ class Schema
       }
       $table->markForCreation();
       $table->setFather($this);
-      
+
       // table is ready to be added to the schema object
       $this->tables[] = $table;
     }
@@ -236,9 +236,38 @@ class Schema
   }
   
   protected function alterTable(Table $newTable) {
-    foreach ($this->tables as $idx => $table) {
-      if ($newTable->getTableName() == $table->getTableName()) {
-        $newTable->setAction(Table::ACTIONALTER);
+    foreach ($this->tables as $idx => $currentTable) {
+      /* @var $currentTable \PHPSchemaManager\Objects\Table */
+      if ($newTable->getTableName() == $currentTable->getTableName()) {
+        
+        // compare the columns. For the existing ones, alter the missing, remove
+        foreach($currentTable->getColumns() as $currentColumn) {
+          /* @var $newColumn \PHPSchemaManager\Objects\Column */
+          
+          // assumes the Column will not be found
+          $columnFound = FALSE;
+          
+          foreach($newTable->getColumns() as $newColumn) {
+            /* @var $currentColumn \PHPSchemaManager\Objects\Column */
+            if ($newColumn->getColumnName() == $currentColumn->getColumnName()) {
+              
+              // To be able to set a Object to be altered, it must be first in the synced stated
+              // that's why I'm using the setAction method directly
+              $newColumn->setAction(self::ACTIONALTER);
+              $columnFound = TRUE;
+              break;
+            }
+          }
+          
+          if (!$columnFound) {
+            // injects the column in the new table, but indicates it to be removed
+            $currentColumn->markForDeletion();
+            $newTable->addColumn($currentColumn);
+          }
+        }
+        
+        $newTable->setAction(self::ACTIONALTER);
+        $newTable->setFather($this);
         $this->tables[$idx] = $newTable;
         return TRUE;
       }
