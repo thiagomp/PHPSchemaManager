@@ -87,22 +87,31 @@ class SchemaManagerTest
   
   public function testCreateTable() {
     // create book table
-    $newTable = new \PHPSchemaManager\Objects\Table('book');
-    $newColumn = new \PHPSchemaManager\Objects\Column('id');
-    $newColumn->setType(\PHPSchemaManager\Objects\Column::SERIAL);
-    $newColumn->setSize(10);
-    $newTable->addColumn($newColumn);
+    $bookTable = new \PHPSchemaManager\Objects\Table('book');
+    
+    $bookIdColumn = new \PHPSchemaManager\Objects\Column('id');
+    $bookIdColumn->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    $bookIdColumn->setSize(10);
+    
+    $bookTable->addColumn($bookIdColumn);
+    
     
     // create wrongTable table
     $wrongTable = new \PHPSchemaManager\Objects\Table("wrongTable");
-    $newColumn2 = new \PHPSchemaManager\Objects\Column('wrongAge');
-    $newColumn2->setType(\PHPSchemaManager\Objects\Column::INT);
-    $wrongTable->addColumn($newColumn);
-    $wrongTable->addColumn($newColumn2);
+    
+    $wrongAgeColumn = new \PHPSchemaManager\Objects\Column('wrongAge');
+    $wrongAgeColumn->setType(\PHPSchemaManager\Objects\Column::INT);
+    
+    $wrongAgeIdColumn = new \PHPSchemaManager\Objects\Column('id');
+    $wrongAgeIdColumn->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    $wrongAgeIdColumn->setSize(10);
+    
+    $wrongTable->addColumn($wrongAgeIdColumn);
+    $wrongTable->addColumn($wrongAgeColumn);
     
     // add tables to the schema
     $schema = new \PHPSchemaManager\Objects\Schema(self::DBTEST);
-    $schema->addTable($newTable);
+    $schema->addTable($bookTable);
     $schema->addTable($wrongTable);
     
     // add the schema to the manager
