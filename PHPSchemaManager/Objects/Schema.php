@@ -259,8 +259,9 @@ class Schema
             }
           }
           
+          // if the column is not found in the new table ...
           if (!$columnFound) {
-            // injects the column in the new table, but indicates it to be removed
+            // ... injects the column in the new table, but indicates it to be removed
             $currentColumn->markForDeletion();
             $newTable->addColumn($currentColumn);
           }
