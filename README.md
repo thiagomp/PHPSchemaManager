@@ -70,6 +70,8 @@ table1 [synced]
 ------------------------------
 ```
 
+You can get more information about how to use this library in the [Documentation](https://github.com/thiagomp/PHPSchemaManager/wiki/Documentation)
+
 ## TODO
 
 Items to be developed. Not necessarily in this order.  
