@@ -95,6 +95,8 @@ class SchemaManagerTest
     
     $bookTable->addColumn($bookIdColumn);
     
+    // checks if the SERIAL type caused a index to be automatically created
+    $this->assertTrue($bookTable->hasIndex('PRIMARY'), "A index name PRIMARY is expected when a column with the SERIAL type is created");
     
     // create wrongTable table
     $wrongTable = new \PHPSchemaManager\Objects\Table("wrongTable");
