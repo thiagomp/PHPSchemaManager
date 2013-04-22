@@ -40,13 +40,11 @@ class Table
         $this->requestFlush();
       }
     }
-    else {
-      
-      $column->setFather($this);
-      $this->columns[] = $column;
-      
-      $this->markForAlter();
-    }
+
+    $column->setFather($this);
+    $this->columns[] = $column;
+
+    $this->markForAlter();
   }
 
     /**

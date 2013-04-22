@@ -95,9 +95,6 @@ class SchemaManagerTest
     
     $bookTable->addColumn($bookIdColumn);
     
-    // checks if the SERIAL type caused a index to be automatically created
-    $this->assertTrue($bookTable->hasIndex('PRIMARY'), "A index name PRIMARY is expected when a column with the SERIAL type is created");
-    
     // create wrongTable table
     $wrongTable = new \PHPSchemaManager\Objects\Table("wrongTable");
     
@@ -425,6 +422,25 @@ class SchemaManagerTest
     $this->assertTrue($bookTable->isDeleted(), "The object should be marked as deleted");
     $this->assertFalse($bookTable->hasColumn('isbn'), "Columns from the deleted table cannot be found by hasColumn");
     $this->assertFalse($bookTable->hasIndex('bookIsbnIdx'), "Indexes from the deleted table cannot be found by hasIndex");
+  }
+  
+  public function testColumnNameConflict() {
+    $wrongTable = $this->sm->hasSchema(self::DBTEST)->hasTable('wrongTable');
+    
+    // mark wrongAge Column to be deleted
+    $wrongTable->dropColumn('wrongAge');
+    
+    // now creates another wrongAge Column ...
+    $wrongAgeColumn = new \PHPSchemaManager\Objects\Column('wrongAge');
+    $wrongAgeColumn->setType(\PHPSchemaManager\Objects\Column::DATETIME);
+    
+    // ... and tries to add it to the table
+    $wrongTable->addColumn($wrongAgeColumn);
+    
+    
+    $this->assertInstanceOf('\PHPSchemaManager\Objects\Column', $wrongTable->hasColumn('wrongAge'), "The Column 'wrongAge' should exist");
+    $this->assertEquals(\PHPSchemaManager\Objects\Column::DATETIME, $wrongTable->hasColumn('wrongAge')->getType(), "'DATETIME' was the type expected for this Column now");
+    
   }
   
   public function testTableNameConflict() {
