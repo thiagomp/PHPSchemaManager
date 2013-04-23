@@ -35,13 +35,9 @@ class Index
   const UNIQUE = 'unique';
   
   function __construct($indexName) {
-    $this->indexName = $indexName;
+    $this->setName($indexName);
     $this->setAsRegularKey();
     $this->markForCreation();
-  }
-  
-  public function getIndexName() {
-    return $this->indexName;
   }
   
   /**
@@ -144,6 +140,6 @@ class Index
   }
   
   public function __toString() {
-    return $this->getIndexName();
+    return $this->getName();
   }
 }

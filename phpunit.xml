@@ -1,3 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="phpunitbootstrap.php">
+  <testsuites>
+    <testsuite name="PHPSchemaManagerSuite">
+      <file>tests/ColumnTest.php</file>
+      <file>tests/ColumnMysqlTest.php</file>
+      <file>tests/TableTest.php</file>
+      <file>tests/SchemaManagerTest.php</file>
+    </testsuite>
+  </testsuites>
 </phpunit>

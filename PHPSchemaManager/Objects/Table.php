@@ -9,18 +9,13 @@ class Table
   extends Objects
   implements iFather, iObjectEvents {
   
-  protected $name;
   protected $columns = array();
   protected $indexes = array();
   protected $trulyCheckIfHasObject = FALSE;
   
   function __construct($tableName) {
-    $this->name = $tableName;
+    $this->setName($tableName);
     $this->markForCreation();
-  }
-  
-  public function getTableName() {
-    return $this->name;
   }
   
   /**
@@ -34,13 +29,26 @@ class Table
     // in case it is, cause a flush, then, create the table
     // This situation might happen when the user marked a table for deletion and
     // tries to create a table with the same name before sending a flush
-    $oldColumn = $this->trulyHasObject($column->getColumnName());
+    $oldColumn = $this->trulyHasObject($column);
     if(!empty($oldColumn)) {
       if($oldColumn->shouldDelete()) {
         $this->requestFlush();
       }
     }
 
+    // check if the the column is from SERIAL data type
+    if (\PHPSchemaManager\Objects\Column::SERIAL ==  $column->getType()) {
+      // check if the table already have a index named 'PRIMARY'
+      if (!$this->hasIndex('PRIMARY')) {
+        // in case there no index, let's create one
+        $index = new Index('PRIMARY');
+        $index->addColumn($column);
+        $index->setAsPrimaryKey();
+        
+        $this->addIndex($index);
+      }
+    }
+    
     $column->setFather($this);
     $this->columns[] = $column;
 
@@ -96,12 +104,25 @@ class Table
     // in case it is, cause a flush, then, create the index
     // This situation might happen when the user marked an index for deletion and
     // tries to create a new index with the same name before sending a flush
-    $oldIndex = $this->trulyHasObject($index->getIndexName());
+    
+    /* @var $oldIndex \PHPSchemaManager\Objects\Index */
+    $oldIndex = $this->trulyHasObject($index);
+    
     if(!empty($oldIndex)) {
       // The informed index already exists in the table...
-      if($oldIndex->shouldDelete()) {
+      
+      // If the Index is a PK and in the Table object already have a PK defined
+      // remove the one in the Table object and go with the new index  informed
+      if($index->isPrimaryKey() && $oldIndex->isPrimaryKey()) {
+        $this->informDeletion($oldIndex);
+        $oldIndex->markAsDeleted();
+      }
+      elseif($oldIndex->shouldDelete()) {
         // ...in case it's marked to be deleted, request a flush to remove it
         $this->requestFlush();
+      }
+      else {
+        throw new \PHPSchemaManager\Exceptions\TableException("Index '$index' already exists in the Table '$this'");
       }
     }
 
@@ -149,21 +170,16 @@ class Table
     return TRUE;
   }
   
-  protected function hasObject($objectName, $objectType) {
-    
-    if ($objectType == 'column') {
-      $objects = $this->getColumns();
-    }
-    else {
-      $objects = $this->getIndexes();
-    }
-    
-    foreach ($objects as $object) {
-      if ($object == $objectName) {
-        if ($this->trulyCheckIfHasObject) {
-          return $object;
-        }
-        return $object->shouldDelete() || $object->isDeleted() ? FALSE : $object;
+  /**
+   * Return the index if it is found or FALSE incase there's no primary key
+   * 
+   * @return \PHPSchemaManager\Objects\Index|boolean
+   */
+  public function hasPrimaryKey() {
+    foreach($this->getIndexes() as $index) {
+      /* @var $index \PHPSchemaManager\Objects\Index */
+      if ($index->isPrimaryKey()) {
+        return $index;
       }
     }
     
@@ -215,6 +231,10 @@ class Table
   
   public function countColumns() {
     return count($this->columns);
+  }
+  
+  public function countIndexes() {
+    return count($this->indexes);
   }
   
   /**
@@ -278,7 +298,28 @@ class Table
   }
   
   public function __toString() {
-    return $this->getTableName();
+    return $this->getName();
+  }
+
+  protected function hasObject($objectName, $objectType) {
+    
+    if ($objectType == 'column') {
+      $objects = $this->getColumns();
+    }
+    else {
+      $objects = $this->getIndexes();
+    }
+    
+    foreach ($objects as $object) {
+      if ($object == $objectName) {
+        if ($this->trulyCheckIfHasObject) {
+          return $object;
+        }
+        return $object->shouldDelete() || $object->isDeleted() ? FALSE : $object;
+      }
+    }
+    
+    return FALSE;
   }
 
   protected function persistColumns() {
@@ -322,7 +363,7 @@ class Table
    */
   protected function removeColumn(\PHPSchemaManager\Objects\Column $column) {
     foreach ($this->columns as $idx => $currentColumn) {
-      if ($column->getColumnName() == $currentColumn->getColumnName()) {
+      if ($column->getName() == $currentColumn->getName()) {
         unset($this->columns[$idx]);
         return TRUE;
       }
@@ -333,7 +374,7 @@ class Table
 
   protected function removeIndex(\PHPSchemaManager\Objects\Index $index) {
     foreach ($this->indexes as $idx => $currentIndex) {
-      if ($index->getIndexName() == $currentIndex->getIndexName()) {
+      if ($index->getName() == $currentIndex->getName()) {
         unset($this->indexes[$idx]);
         return TRUE;
       }
@@ -342,9 +383,9 @@ class Table
     throw new \PHPSchemaManager\Exceptions\TableException("Index $index couldn't be removed from the Table object, because it wasn't found in the table $this");
   }
 
-  protected function trulyHasObject($objectName) {
+  protected function trulyHasObject(Objects $object) {
     $this->trulyCheckIfHasObject = TRUE;
-    $res = $this->hasColumn($objectName);
+    $res = $this->hasObject($object->getName(), join('', array_slice(explode('\\', strtolower(get_class($object))), -1)));
     $this->trulyCheckIfHasObject = FALSE;
     return $res;
   }

@@ -5,7 +5,6 @@ class Schema
   extends Objects
   implements iFather, iObjectEvents {
   
-  protected $name;
   protected $configuration;
   protected $ignore = FALSE;
   
@@ -23,11 +22,7 @@ class Schema
   protected $trulyCheckIfHasTable = FALSE;
   
   function __construct($name) {
-    $this->name = $name;
-  }
-  
-  public function getSchemaName() {
-    return $this->name;
+    $this->setName($name);
   }
   
   /**
@@ -75,12 +70,14 @@ class Schema
    */
   public function addTable(Table $table, $replaceTable = FALSE) {
     // check if the table exists in the schema
-    if ($this->hasTable($table)) {
+    if ($oldTable = $this->hasTable($table->getName())) {
 
       // Check if the table should be replaced in case the library receives a
       // table that already exists in the schema
       if ($replaceTable) {
-        $this->alterTable($table);
+        //$this->alterTable($table);
+        $oldTable->markForDeletion();
+        $this->requestFlush();
       }
       else {
         // if the table is not to be replaced, throws an Exception
@@ -90,7 +87,7 @@ class Schema
         throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
       }
     }
-    else {
+    //else {
       // in case the table wasn't found in the schema, now is the time to add it
       
       // Check if the table have at least one column.
@@ -103,7 +100,7 @@ class Schema
       // in case it is, cause a flush, then, create the table
       // This situation might happen when the user marked a table for deletion and
       // tries to create a table with the same name before sending a flush
-      $t = $this->trulyHasTable($table->getTableName());
+      $t = $this->trulyHasTable($table->getName());
       if ($t instanceof Table) {
         //check if the table should be deleted...
         if ($t->shouldDelete()) {
@@ -117,7 +114,7 @@ class Schema
 
       // table is ready to be added to the schema object
       $this->tables[] = $table;
-    }
+    //}
   }
   
   public function dropTable($tableName) {
@@ -232,13 +229,13 @@ class Schema
   }
   
   public function __toString() {
-    return $this->getSchemaName();
+    return $this->getName();
   }
   
   protected function alterTable(Table $newTable) {
     foreach ($this->tables as $idx => $currentTable) {
       /* @var $currentTable \PHPSchemaManager\Objects\Table */
-      if ($newTable->getTableName() == $currentTable->getTableName()) {
+      if ($newTable->getName() == $currentTable->getName()) {
         
         // compare the columns. For the existing ones, alter the missing, remove
         foreach($currentTable->getColumns() as $currentColumn) {
@@ -249,7 +246,7 @@ class Schema
           
           foreach($newTable->getColumns() as $newColumn) {
             /* @var $currentColumn \PHPSchemaManager\Objects\Column */
-            if ($newColumn->getColumnName() == $currentColumn->getColumnName()) {
+            if ($newColumn->getName() == $currentColumn->getName()) {
               
               // To be able to set a Object to be altered, it must be first in the synced stated
               // that's why I'm using the setAction method directly
@@ -267,6 +264,8 @@ class Schema
           }
         }
         
+        // check if there are PRIMARY
+        
         $newTable->setAction(self::ACTIONALTER);
         $newTable->setFather($this);
         $this->tables[$idx] = $newTable;
@@ -279,7 +278,7 @@ class Schema
   
   protected function removeTable(Table $table) {
     foreach($this->tables as $idx => $currentTable) {
-      if ($table->getTableName() == $currentTable->getTableName()) {
+      if ($table->getName() == $currentTable->getName()) {
         unset($this->tables[$idx]);
         return TRUE;
       }

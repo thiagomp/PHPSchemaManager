@@ -6,6 +6,8 @@ class Manager
   implements iFather {
   
   protected $ignoreSchemas = array();
+  protected $schemas = array();
+  protected $firstFetchExecuted = FALSE;
   
   const DEFULTCONNECTION = 'default';
   
@@ -49,12 +51,6 @@ class Manager
       
       // stabilishes a connection
       $conn->driver->connect();
-
-      //gets all schemas found in this connection
-      foreach ($conn->driver->getSchemas(self::getIgnoredSchemas()) as $schema) {
-        $this->addSchema($schema, $connectionName);
-        $schema->setFather($this);
-      }
     }
   }
   
@@ -87,7 +83,7 @@ class Manager
     
     try{
       $schema->setConnection($this->getConnection($connectionName));
-      $schemaName = $schema->isCaseSensitiveNamesOn() ? $schema->getSchemaName() : strtolower($schema->getSchemaName());
+      $schemaName = $schema->isCaseSensitiveNamesOn() ? $schema->getName() : strtolower($schema->getName());
       
       // add the schema for this manager
       $this->schemas[$connectionName][$schemaName] = $schema;
@@ -114,7 +110,9 @@ class Manager
     if (empty($connectionName)) {
       $connectionName = self::DEFULTCONNECTION;
     }
-
+    
+    $this->fetchFromDatabase();
+    
     // check if the desired schema exists in the selected connection
     if (!empty($this->schemas) && !empty($this->schemas[$connectionName])) {
 
@@ -143,7 +141,7 @@ class Manager
    * @return \PHPSchemaManager\Objects\Schema[]
    */
   public function getSchemas($connectionName = self::DEFULTCONNECTION) {
-    return empty($connectionName) ? $this->schemas : $this->schemas[$connectionName];
+    return empty($connectionName) || empty($this->schemas) ? $this->schemas : $this->schemas[$connectionName];
   }
   
   public function dropSchema($schemaName, $connectionName = self::DEFULTCONNECTION) {
@@ -288,8 +286,8 @@ class Manager
   
   protected function removeSchema(Schema $schema) {
     foreach($this->schemas as $connectionName => $currentSchemas) {
-      if (array_key_exists($schema->getSchemaName(), $currentSchemas))
-        unset($this->schemas[$connectionName][$schema->getSchemaName()]);
+      if (array_key_exists($schema->getName(), $currentSchemas))
+        unset($this->schemas[$connectionName][$schema->getName()]);
         return TRUE;
       }
     
@@ -314,6 +312,9 @@ class Manager
   }
   
   public function printTxt() {
+    
+    $this->fetchFromDatabase();
+    
     $conn = $this->getConnection(self::DEFULTCONNECTION);
     
     $msg = $this->countSchemas() . " schemas were found in the connection '$conn' " .
@@ -327,6 +328,24 @@ class Manager
   }
   
   public function countSchemas() {
+    $this->fetchFromDatabase();
     return count($this->getSchemas());
+  }
+  
+  /**
+   * Go to the database and fetch information from the schemas
+   * This method will be called only if the schemas are empty
+   */
+  protected function fetchFromDatabase($connectionName = NULL) {
+    $connectionName = empty($connectionName) ? self::DEFULTCONNECTION : $connectionName;
+    
+    if (empty($this->schemas) || empty($this->schemas[$connectionName])) {
+      $conn = $this->getConnection($connectionName);
+      //gets all schemas found in this connection
+      foreach ($conn->driver->getSchemas($this->getIgnoredSchemas()) as $schema) {
+        $this->addSchema($schema, $connectionName);
+        $schema->setFather($this);
+      }
+    }
   }
 }

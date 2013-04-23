@@ -24,6 +24,8 @@ class SchemaManagerTest
     $conn->hostname = '127.0.0.1';
     
     $this->sm = \PHPSchemaManager\PHPSchemaManager::getManager($conn);
+    $this->sm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+    
     $this->conn = $conn;
   }
   
@@ -144,6 +146,10 @@ class SchemaManagerTest
     $this->assertTrue($this->sm->hasSchema(self::DBTEST)->hasTable("wrongTable")->isSynced(), "The 'wrongTable' table should be synced (direct)");    
   }
   
+  public function testSchemaCanBeFound() {
+    $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+  }
+  
   public function testReplaceTable() {
     // create the table that will be duplicated
     $duplicatedTable = new \PHPSchemaManager\Objects\Table('duplicatedTable');
@@ -193,6 +199,14 @@ class SchemaManagerTest
     $this->assertEquals(10,
             $this->sm->hasSchema(self::DBTEST)->hasTable('duplicatedTable')->hasColumn('columnA')->getSize(),
             "Column 'id' is expected to have its size configured to be 10");
+    
+    $this->assertInstanceOf('\PHPSchemaManager\Objects\Index',
+            $this->sm->hasSchema(self::DBTEST)->hasTable('duplicatedTable')->hasIndex('PRIMARY'),
+            'Check if the table have a PRIMARY key');
+    
+    $this->assertEquals(1,
+            $this->sm->hasSchema(self::DBTEST)->hasTable('duplicatedTable')->countIndexes(),
+            "'duplicatedTable' is expected to have only 1 index");
     
     $this->sm->hasSchema(self::DBTEST)->dropTable('duplicatedTable');
     $this->sm->flush();
@@ -283,6 +297,7 @@ class SchemaManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertEquals(222, $newSm->hasSchema(self::DBTEST)->hasTable("book")->hasColumn("title")->getSize(), "Check if the title size was correctly saved to the database after changing it by doing an operation altogether");
     
     // try another change
@@ -291,6 +306,7 @@ class SchemaManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertFalse($newSm->hasSchema(self::DBTEST)->hasTable("book")->hasColumn("language")->isNullAllowed(), "Check if the colum accepts Null after the change was persisted in the database");
   }
   
@@ -404,6 +420,7 @@ class SchemaManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertFalse($newSm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('wrongIdx'));
   }
   
@@ -418,6 +435,7 @@ class SchemaManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertFalse($newSm->hasSchema(self::DBTEST)->hasTable('book'), "Check if the book table was really dropped from the database");
     $this->assertTrue($bookTable->isDeleted(), "The object should be marked as deleted");
     $this->assertFalse($bookTable->hasColumn('isbn'), "Columns from the deleted table cannot be found by hasColumn");

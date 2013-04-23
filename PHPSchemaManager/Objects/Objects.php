@@ -28,13 +28,14 @@ class Objects {
   const STATUSSYNCED  = 'synced';
   const STATUSDELETED = 'deleted';
   
+  protected $objectName = '';
   protected $action = self::ACTIONCREATE;
   protected $listeners;
   protected $caseSentiveNames = FALSE;
   
   /* @var $father \PHPSchemaManager\Objects\Objects */
   protected $father = NULL;
-
+  
   public function markForAlter() {
     if ($this->isSynced()) {
       $this->setAction(self::ACTIONALTER);
@@ -157,6 +158,14 @@ class Objects {
    */
   public function getFather() {
     return $this->father;
+  }
+  
+  public function getName() {
+    return $this->objectName;
+  }
+  
+  protected function setName($name) {
+    $this->objectName = (string)$name;
   }
   
   protected function requestFlush() {

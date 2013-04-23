@@ -47,7 +47,7 @@ class Column
   const NODEFAULTVALUE = 'schemamanagernodefaultvalue';
   
   public function __construct($columnName) {
-    $this->name = $columnName;
+    $this->setName($columnName);
     $this->markForCreation();
     $this->allowsNull();
     $this->setDefaultValue(self::NODEFAULTVALUE);
@@ -58,10 +58,6 @@ class Column
     // information will be ignored when generating the SQL to manage the column
     // in the database
     $this->signed();
-  }
-
-  public function getColumnName() {
-    return $this->name;
   }
   
   /**
@@ -335,7 +331,7 @@ class Column
   }
   
   public function __toString() {
-    return $this->getColumnName();
+    return $this->getName();
   }
   
   protected function getNormalizedDefaultValue() {

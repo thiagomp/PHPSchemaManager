@@ -65,7 +65,7 @@ class DriverMysql
       $lowerCaseTableNames ? $schema->turnCaseSensitiveNamesOn() : $schema->turnCaseSensitiveNamesOff();
       
       // check if the schema should be ignored
-      if (!in_array($schema->getSchemaName(), $ignoredSchemas)) {
+      if (!in_array($schema->getName(), $ignoredSchemas)) {
         $this->getTables($schema);
       }
       else {
@@ -84,14 +84,12 @@ class DriverMysql
   public function getTables(\PHPSchemaManager\Objects\Schema $schema) {
    
     try {
-      $this->selectDb($schema->getSchemaName());
+      $this->selectDb($schema->getName());
     }catch(\PHPSchemaManager\Exceptions\MysqlException $e){
       // most probably, it because the schema wasn't created yet
       // in this case, an empty set of tables will be replied
       return array();
     }
-    
-    $tables = array();
     
     // get the tables from the database
     $sql = "SHOW TABLES";
@@ -152,7 +150,7 @@ class DriverMysql
     // flush schema
     switch($schema->getAction()) {
       case \PHPSchemaManager\Objects\Schema::ACTIONCREATE:
-        $this->createDatabase($schema->getSchemaName());
+        $this->createDatabase($schema->getName());
         break;
 
       case \PHPSchemaManager\Objects\Schema::ACTIONALTER:
@@ -178,7 +176,7 @@ class DriverMysql
     $schema->persisted();
     
     // switch to the schema, so the tables can be also persisted
-    $this->selectDb($schema->getSchemaName());
+    $this->selectDb($schema->getName());
     
     // flush tables
     foreach($schema->getTables() as $table) {
@@ -312,7 +310,7 @@ class DriverMysql
     }
     
     foreach($indexes as $indexName => $values) {
-      $index = new \PHPSchemaManager\Objects\Index($indexName, \PHPSchemaManager\Objects\Index::STATUSSYNCED);
+      $index = new \PHPSchemaManager\Objects\Index($indexName);
       foreach($values as $idx) {
         if (!$column = $table->hasColumn($idx['COLUMN_NAME'])) {
           throw new \PHPSchemaManager\Exceptions\MysqlException("Trying to create an index with a non-existent column ({$idx['COLUMN_NAME']})");
@@ -340,8 +338,11 @@ class DriverMysql
   protected function alterTable(\PHPSchemaManager\Objects\Table $table) {
     $this->selectDb();
     $sql = "ALTER TABLE $table" . PHP_EOL;
-    $sql .= $this->alterTableColumns($table);
-    $sql .= $this->alterTableIndexes($table);
+    $sqlParts[] = rtrim($this->alterTableColumns($table), PHP_EOL);
+    $sqlParts[] = rtrim($this->alterTableIndexes($table), PHP_EOL);
+    
+    // normalizes the query to avoid issues
+    $sql .= trim(implode("," . PHP_EOL, $sqlParts), "," . PHP_EOL) . PHP_EOL;
 
     $this->dbQuery($sql);
   }
@@ -362,10 +363,10 @@ class DriverMysql
       else {
         
         if ($column->shouldCreate()) {
-          $instruction[$i] = "ADD COLUMN " . PHP_EOL;
+          $instruction[$i] = "ADD COLUMN ";
         }
         elseif($column->shouldAlter()) {
-          $instruction[$i] = "MODIFY COLUMN " . PHP_EOL;
+          $instruction[$i] = "MODIFY COLUMN ";
         }
         
         $col = new DriverMysqlColumn($column);
@@ -384,6 +385,7 @@ class DriverMysql
     $sql = "";
     
     foreach($table->getIndexes() as $index) {
+      /* @var $index \PHPSchemaManager\Objects\Index */
       
       // Mysql doesn't support index modification. @see http://dev.mysql.com/doc/refman/5.0/en/alter-table.html
       if ($index->shouldAlter()) {
@@ -417,7 +419,16 @@ class DriverMysql
         // check if it is a unique key
         $unique = $index->isUniqueKey() ? "UNIQUE " : "";
         
-        $sql .= "ADD {$unique}INDEX $index($columnsString)" . PHP_EOL;
+        $sql .= "ADD ";
+        
+        if ($index->isPrimaryKey()) {
+          $sql .= "PRIMARY KEY";
+        }
+        else {
+          $sql .= "{$unique}INDEX $index";
+        }
+        
+        $sql .= "($columnsString)" . PHP_EOL;
       }
 
     }
