@@ -119,7 +119,7 @@ class Manager
    * @return \PHPSchemaManager\Objects\Schema[]
    */
   public function getSchemas() {
-    return empty($this->schemas) ? $this->schemas : $this->schemas[$connectionName];
+    return empty($this->schemas) ? $this->schemas : $this->schemas;
   }
   
   public function dropSchema($schemaName) {
