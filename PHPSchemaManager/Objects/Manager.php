@@ -8,33 +8,32 @@ class Manager
   protected $ignoreSchemas = array();
   protected $schemas = array();
   protected $firstFetchExecuted = FALSE;
-  
+  protected $connection;
+
+
   const DEFULTCONNECTION = 'default';
   
-  function __construct(\PHPSchemaManager\Connection $defaultConnection) {
-    $this->addConnection($defaultConnection, self::DEFULTCONNECTION);;
+  function __construct(\PHPSchemaManager\Connection $conn) {
+    $this->setConnection($conn);
   }
   
   /**
    * Add a new connection to the SchemaManager
    * 
    * @param \PHPSchemaManager\Connection $connection
-   * @param string $connectionName
    */
-  public function addConnection(\PHPSchemaManager\Connection $connection, $connectionName) {
-    $connection->connectionName = $connectionName;
-    $this->connections[$connectionName] = $connection;
-    $this->connect($connectionName);
+  public function setConnection(\PHPSchemaManager\Connection $connection) {
+    $this->connection = $connection;
+    $this->connect();
   }
   
   /**
    * Recovers a connection by its name
    * 
-   * @param string $connectionName
    * @return \PHPSchemaManager\Connection|Boolean
    */
-  public function getConnection($connectionName) {
-    return empty($this->connections[$connectionName]) ? FALSE : $this->connections[$connectionName];
+  public function getConnection() {
+    return $this->connection;
   }
   
   /**
@@ -43,15 +42,14 @@ class Manager
    * 
    * @return \PHPSchemaManager\Drivers\iDriver
    */
-  public function connect($connectionName = self::DEFULTCONNECTION) {
-    $conn = $this->getConnection($connectionName);
-    if (empty($conn->handle)) {
-      // get the database driver that will be used
-      $conn->driver = \PHPSchemaManager\Drivers\Driver::getDbms($conn);
-      
-      // stabilishes a connection
-      $conn->driver->connect();
-    }
+  public function connect() {
+    $conn = $this->getConnection();
+    
+    // get the database driver that will be used
+    $conn->driver = \PHPSchemaManager\Drivers\Driver::getDbms($conn);
+
+    // stabilishes a connection
+    $conn->driver->connect();
   }
   
   /**
@@ -59,11 +57,9 @@ class Manager
    */
   public function flush() {
     if (!empty($this->schemas)) {
-      foreach($this->schemas as $connectionName => $schemas){
-        $conn = $this->getConnection($connectionName);
-        foreach($schemas as $schema) {
-          $conn->driver->flush($schema);
-        }
+      $conn = $this->getConnection();
+      foreach($this->schemas as $schema){
+        $conn->driver->flush($schema);
       }
     }
   }
@@ -72,21 +68,16 @@ class Manager
    * Add a new Schema in to the SchemaManager
    * 
    * @param \PHPSchemamanager\Objects\Schema $schema
-   * @param string $connectionName
    * @return Boolean TRUE if the schema could be added or FALSE if the schema couldn't be added
    */
-  public function addSchema(Schema $schema, $connectionName = NULL) {
-    
-    if (empty($connectionName)) {
-      $connectionName = self::DEFULTCONNECTION;
-    }
+  public function addSchema(Schema $schema) {
     
     try{
-      $schema->setConnection($this->getConnection($connectionName));
+      $schema->setConnection($this->getConnection());
       $schemaName = $schema->isCaseSensitiveNamesOn() ? $schema->getName() : strtolower($schema->getName());
       
       // add the schema for this manager
-      $this->schemas[$connectionName][$schemaName] = $schema;
+      $this->schemas[$schemaName] = $schema;
       
       return TRUE;
     }
@@ -101,31 +92,21 @@ class Manager
    * configured in the instaciation of the object
    * 
    * @param string $schemaName
-   * @param string $connectionName
    * @return \PHPSchemaManager\Objects\Schema|Boolean
    */
-  public function hasSchema($schemaName, $connectionName = NULL) {
-    
-    // normalizes the connection name
-    if (empty($connectionName)) {
-      $connectionName = self::DEFULTCONNECTION;
-    }
+  public function hasSchema($schemaName) {
     
     $this->fetchFromDatabase();
     
-    // check if the desired schema exists in the selected connection
-    if (!empty($this->schemas) && !empty($this->schemas[$connectionName])) {
+    // try to get the schema from the class
+    foreach($this->schemas as $currentSchemaName => $schema) {
 
-      // try to get the schema from the class
-      foreach($this->schemas[$connectionName] as $currentSchemaName => $schema) {
-        
-        /* @var $schema \SchemaManager\Objects\Schema*/
-        if ($currentSchemaName == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
-          // schema is found, but first checks if it's marked to be deleted
-          return $schema->shouldDelete() || $schema->isDeleted() ? FALSE : $schema;
-        }
-        
+      /* @var $schema \SchemaManager\Objects\Schema*/
+      if ($currentSchemaName == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
+        // schema is found, but first checks if it's marked to be deleted
+        return $schema->shouldDelete() || $schema->isDeleted() ? FALSE : $schema;
       }
+
     }
 
     // the schema wasn't found in the informed connection
@@ -133,18 +114,15 @@ class Manager
   }
   
   /**
-   * Return an array of Schemas
-   * In case you send NULL for the parameter, all schemas for all connections
-   * will be retrieved
+   * Return an array of Schemas that belongs to the connection of this manager
    * 
-   * @param string $connectionName
    * @return \PHPSchemaManager\Objects\Schema[]
    */
-  public function getSchemas($connectionName = self::DEFULTCONNECTION) {
-    return empty($connectionName) || empty($this->schemas) ? $this->schemas : $this->schemas[$connectionName];
+  public function getSchemas() {
+    return empty($this->schemas) ? $this->schemas : $this->schemas[$connectionName];
   }
   
-  public function dropSchema($schemaName, $connectionName = self::DEFULTCONNECTION) {
+  public function dropSchema($schemaName) {
     
     /* @var $schema \PHPSchemaManager\Objects\Schema */
     $schema = $this->hasSchema($schemaName);
@@ -153,7 +131,7 @@ class Manager
       $schema->markForDeletion();
     }
     else {
-      $msg = "Schema '$schemaName' couldn't be dropped since it wasn't found in the connection '$connectionName'";
+      $msg = "Schema '$schemaName' couldn't be dropped since it wasn't found in the currnet connection";
       throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
     }
   }
@@ -285,13 +263,12 @@ class Manager
   ## End of the iFather methods
   
   protected function removeSchema(Schema $schema) {
-    foreach($this->schemas as $connectionName => $currentSchemas) {
-      if (array_key_exists($schema->getName(), $currentSchemas))
-        unset($this->schemas[$connectionName][$schema->getName()]);
-        return TRUE;
-      }
+    if (array_key_exists($schema->getName(), $this->schemas)) {
+      unset($this->schemas[$schema->getName()]);
+      return TRUE;
+    }
     
-    throw new \PHPSchemaManager\Exceptions\SchemaException("Schema '$schema' couldn't be dropped from the connection {$this->conn->connectionName}");
+    throw new \PHPSchemaManager\Exceptions\SchemaException("Schema '$schema' couldn't be dropped from the current connection}");
   }
   
   /**
@@ -315,7 +292,7 @@ class Manager
     
     $this->fetchFromDatabase();
     
-    $conn = $this->getConnection(self::DEFULTCONNECTION);
+    $conn = $this->getConnection();
     
     $msg = $this->countSchemas() . " schemas were found in the connection '$conn' " .
             "({$conn->username}@{$conn->hostname}:{$conn->port} [{$conn->dbms}])" . PHP_EOL;
@@ -336,14 +313,14 @@ class Manager
    * Go to the database and fetch information from the schemas
    * This method will be called only if the schemas are empty
    */
-  protected function fetchFromDatabase($connectionName = NULL) {
-    $connectionName = empty($connectionName) ? self::DEFULTCONNECTION : $connectionName;
+  protected function fetchFromDatabase() {
     
-    if (empty($this->schemas) || empty($this->schemas[$connectionName])) {
-      $conn = $this->getConnection($connectionName);
+    if (empty($this->schemas)) {
+      $conn = $this->getConnection();
+      
       //gets all schemas found in this connection
       foreach ($conn->driver->getSchemas($this->getIgnoredSchemas()) as $schema) {
-        $this->addSchema($schema, $connectionName);
+        $this->addSchema($schema);
         $schema->setFather($this);
       }
     }
