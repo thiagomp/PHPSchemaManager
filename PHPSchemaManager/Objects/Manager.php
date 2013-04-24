@@ -136,6 +136,17 @@ class Manager
     }
   }
   
+  /**
+   * Creates the PHPSchemaManager objects based on a JSON string
+   * By the end of the process, this Manager object will populated with the
+   * objects
+   * Notice that this method expects the file to have one schema inside
+   * 
+   * @param type $filePath
+   * @throws \SchemaManager\Exceptions\FileException
+   * @throws \PHPSchemaManager\Exceptions\FileException
+   * @throws \PHPSchemaManager\Exceptions\ManagerException
+   */
   public function loadFromJSONFile($filePath) {
     // check if the file can be read
     if (!is_readable($filePath)) {
@@ -143,33 +154,25 @@ class Manager
       throw new \SchemaManager\Exceptions\FileException($msg);
     }
     
+    $this->loadFromJSONString(file_get_contents($filePath));
+  }
+  
+  /**
+   * Creates the PHPSchemaManager objects based on a JSON string
+   * By the end of the process, this Manager object will populated with the
+   * objects
+   * Notice that this method expects the file to have one schema inside
+   * 
+   * @param type $jsonString
+   * @throws \PHPSchemaManager\Exceptions\FileException
+   * @throws \PHPSchemaManager\Exceptions\ManagerException
+   */
+  public function loadFromJSONString($jsonString) {
     // try to decode the JSON format
-    if (!$json = json_decode(file_get_contents($filePath), true)) {
+    if (!$json = json_decode($jsonString, true)) {
       
       $msg = "An error ocurred while processing the JSON file: ";
-      
-      switch (json_last_error()) {
-        case JSON_ERROR_NONE:
-          $msg .= 'No errors';
-          break;
-        case JSON_ERROR_DEPTH:
-          $msg .= 'Maximum stack depth exceeded';
-          break;
-        case JSON_ERROR_STATE_MISMATCH:
-          $msg .= 'Underflow or the modes mismatch';
-          break;
-        case JSON_ERROR_CTRL_CHAR:
-          $msg .= 'Unexpected control character found';
-          break;
-        case JSON_ERROR_SYNTAX:
-          $msg .= 'Syntax error, malformed JSON';
-          break;
-        case JSON_ERROR_UTF8:
-          $msg .= 'Malformed UTF-8 characters, possibly incorrectly encoded';
-          break;
-        default:
-          $msg .= 'Unknown error';
-      }
+      $this->getJSONErrorMessage(json_last_error());
       
       throw new \PHPSchemaManager\Exceptions\FileException($msg);
     }
@@ -189,60 +192,11 @@ class Manager
     foreach($json[$schemaName] as $tableName => $items) {
       $table = new Table($tableName);
       
-      if (empty($items['columns'])) {
-        $msg = "Columns definitions wasn't found in the JSON file";
-        throw new \PHPSchemaManager\Exceptions\ManagerException($msg);
-      }
-      
       // get all the columns from the current table
-      foreach($items['columns'] as $columnName => $columnDefinitions) {
-        $column = new Column($columnName);
-        
-        foreach($columnDefinitions as $action => $definition) {
-          switch($action) {
-            case 'type':
-              $column->setType($definition);
-              break;
-            case 'size':
-              $column->setSize($definition);
-              break;
-            case 'null allowed':
-              strtolower($definition) == 'yes' ? $column->allowsNull() : $column->forbidsNull();
-              break;
-            case 'default value';
-              $column->setDefaultValue($definition);
-              break;
-            default:
-              $msg = "Action '$action' for column wasn't reconized while loading data from JSON file";
-              throw new \PHPSchemaManager\Exceptions\ManagerException();
-          }
-        }
-        
-        $table->addColumn($column);
-      }
+      $this->getColumnsFromJSON($table, $items);
       
       // get all the indexes from the current table
-      foreach($items['keys'] as $indexName => $indexDefinitions) {
-        $index = new Index($indexName);
-
-        foreach($indexDefinitions as $action => $definition) {
-          switch ($action) {
-            case 'type':
-              $index->setType($definition);
-              break;
-            case 'columns':
-              foreach($definition as $columnName) {
-                $index->addColumn($table->hasColumn($columnName));
-              }
-              break;
-            default:
-              $msg = "Action '$action' for index wasn't reconized while loading data from JSON file";
-              throw new \PHPSchemaManager\Exceptions\ManagerException();
-          }
-        }
-        
-        $table->addIndex($index);
-      }
+      $this->getIndexesFromJSON($table, $items);
       
       $schema->addTable($table);
     }
@@ -325,4 +279,109 @@ class Manager
       }
     }
   }
+  
+  /**
+   * Get the error id informed by the json_last_error() function and returns
+   * the appropriate error message
+   * 
+   * @param type $errorId
+   * @return string
+   */
+  protected function getJSONErrorMessage($errorId) {
+      switch ($errorId) {
+        case JSON_ERROR_NONE:
+          $msg = 'No errors';
+          break;
+        case JSON_ERROR_DEPTH:
+          $msg = 'Maximum stack depth exceeded';
+          break;
+        case JSON_ERROR_STATE_MISMATCH:
+          $msg = 'Underflow or the modes mismatch';
+          break;
+        case JSON_ERROR_CTRL_CHAR:
+          $msg = 'Unexpected control character found';
+          break;
+        case JSON_ERROR_SYNTAX:
+          $msg = 'Syntax error, malformed JSON';
+          break;
+        case JSON_ERROR_UTF8:
+          $msg = 'Malformed UTF-8 characters, possibly incorrectly encoded';
+          break;
+        default:
+          $msg = 'Unknown error';
+      }
+      
+      return $msg;
+  }
+  
+  protected function getColumnsFromJSON(Table $table, $items) {
+    
+    if (empty($items['columns'])) {
+      $msg = "Columns definitions wasn't found in the JSON file";
+      throw new \PHPSchemaManager\Exceptions\ManagerException($msg);
+    }
+    
+    // get all the columns from the current table
+    foreach($items['columns'] as $columnName => $columnDefinitions) {
+
+      $column = new Column($columnName);
+      
+      foreach($columnDefinitions as $action => $definition) {
+        switch($action) {
+          case 'type':
+            $column->setType($definition);
+            break;
+          case 'size':
+            $column->setSize($definition);
+            break;
+          case 'null allowed':
+            strtolower($definition) == 'yes' ? $column->allowsNull() : $column->forbidsNull();
+            break;
+          case 'default value';
+            $column->setDefaultValue($definition);
+            break;
+          default:
+            $msg = "Action '$action' for column wasn't reconized while loading data from JSON file";
+            throw new \PHPSchemaManager\Exceptions\ManagerException();
+        }
+      }
+    
+      $table->addColumn($column);
+    }
+    
+  }
+  
+  protected function getIndexesFromJSON(Table $table, $items) {
+    
+    if (empty($items['keys'])) {
+      $msg = "Columns definitions wasn't found in the JSON file";
+      throw new \PHPSchemaManager\Exceptions\ManagerException($msg);
+    }
+    
+    // get all the indexes from the current table
+    foreach($items['keys'] as $indexName => $indexDefinitions) {
+      
+      $index = new Index($indexName);
+
+      foreach($indexDefinitions as $action => $definition) {
+        switch ($action) {
+          case 'type':
+            $index->setType($definition);
+            break;
+          case 'columns':
+            foreach($definition as $columnName) {
+              $index->addColumn($table->hasColumn($columnName));
+            }
+            break;
+          default:
+            $msg = "Action '$action' for index wasn't reconized while loading data from JSON file";
+            throw new \PHPSchemaManager\Exceptions\ManagerException();
+        }
+      }
+    
+      $table->addIndex($index);
+    }
+
+  }
+  
 }
