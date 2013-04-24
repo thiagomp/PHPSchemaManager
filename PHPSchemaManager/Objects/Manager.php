@@ -143,7 +143,7 @@ class Manager
    * Notice that this method expects the file to have one schema inside
    * 
    * @param type $filePath
-   * @throws \SchemaManager\Exceptions\FileException
+   * @throws \PHPSchemaManager\Exceptions\FileException
    * @throws \PHPSchemaManager\Exceptions\FileException
    * @throws \PHPSchemaManager\Exceptions\ManagerException
    */
@@ -151,7 +151,7 @@ class Manager
     // check if the file can be read
     if (!is_readable($filePath)) {
       $msg = "File '$filePath' can't be opened. Check if the file exists and its permissions";
-      throw new \SchemaManager\Exceptions\FileException($msg);
+      throw new \PHPSchemaManager\Exceptions\FileException($msg);
     }
     
     $this->loadFromJSONString(file_get_contents($filePath));
