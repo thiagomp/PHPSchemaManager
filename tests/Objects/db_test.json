@@ -29,13 +29,25 @@
       },
 
       "keys": {
-        "primary": {
-          "type": "pk",
-          "columns": ["id"]
+        "isbnidx": {
+          "type": "regular",
+          "columns": ["isbn"]
         },
         "wrongidx": {
           "type": "regular",
           "columns": ["title"]
+        },
+        "multidx": {
+          "type": "regular",
+          "columns": ["title", "language"]
+        },
+        "titleidx": {
+          "type": "regular",
+          "columns": ["title"]
+        },
+        "primary": {
+          "type": "pk",
+          "columns": ["id"]
         }
       }
     },

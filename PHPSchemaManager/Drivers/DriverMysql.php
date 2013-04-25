@@ -372,17 +372,16 @@ class DriverMysql
         $col = new DriverMysqlColumn($column);
         $instruction[$i] .= $col->getDataDefinition();
       }
+      
+      $i++;
     }
     
-    if (!empty($instruction)) {
-      $sql = implode(", " . PHP_EOL, $instruction);
-    }
-    
-    return $sql;
+    return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
   }
   
   protected function alterTableIndexes(\PHPSchemaManager\Objects\Table $table) {
-    $sql = "";
+    $i = 0;
+    $instruction = array();
     
     foreach($table->getIndexes() as $index) {
       /* @var $index \PHPSchemaManager\Objects\Index */
@@ -403,7 +402,7 @@ class DriverMysql
       
       // check if the index should be deleted
       elseif ($index->shouldDelete()) {
-        $sql .= "DROP INDEX $index" . PHP_EOL;
+        $instruction[$i] = "DROP INDEX $index" . PHP_EOL;
         $index->markAsDeleted();
         $index->destroy();
       }
@@ -419,21 +418,23 @@ class DriverMysql
         // check if it is a unique key
         $unique = $index->isUniqueKey() ? "UNIQUE " : "";
         
-        $sql .= "ADD ";
+        $instruction[$i] = "ADD ";
         
         if ($index->isPrimaryKey()) {
-          $sql .= "PRIMARY KEY";
+          $instruction[$i] .= "PRIMARY KEY";
         }
         else {
-          $sql .= "{$unique}INDEX $index";
+          $instruction[$i] .= "{$unique}INDEX $index";
         }
         
-        $sql .= "($columnsString)" . PHP_EOL;
+        $instruction[$i] .= "($columnsString)" . PHP_EOL;
       }
+      
+      $i++;
 
     }
     
-    return $sql;
+    return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
   }
   
   protected function deleteTable(\PHPSchemaManager\Objects\Table $table) {

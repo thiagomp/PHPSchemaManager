@@ -100,29 +100,24 @@ class Table
    * @param \PHPSchemaManager\Objects\Index $index
    */
   public function addIndex(Index $index) {
-    // Before create, check if the index is still on the indexes class variable
-    // in case it is, cause a flush, then, create the index
-    // This situation might happen when the user marked an index for deletion and
-    // tries to create a new index with the same name before sending a flush
     
     /* @var $oldIndex \PHPSchemaManager\Objects\Index */
     $oldIndex = $this->trulyHasObject($index);
     
+    // Check if the Index already exists
     if(!empty($oldIndex)) {
       // The informed index already exists in the table...
       
       // If the Index is a PK and in the Table object already have a PK defined
-      // remove the one in the Table object and go with the new index  informed
+      // remove the one in the Table object and go with the new index informed
       if($index->isPrimaryKey() && $oldIndex->isPrimaryKey()) {
         $this->informDeletion($oldIndex);
         $oldIndex->markAsDeleted();
       }
-      elseif($oldIndex->shouldDelete()) {
+      else {
+        $oldIndex->markForDeletion();
         // ...in case it's marked to be deleted, request a flush to remove it
         $this->requestFlush();
-      }
-      else {
-        throw new \PHPSchemaManager\Exceptions\TableException("Index '$index' already exists in the Table '$this'");
       }
     }
 

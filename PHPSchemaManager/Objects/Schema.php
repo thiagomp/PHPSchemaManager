@@ -87,34 +87,33 @@ class Schema
         throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
       }
     }
-    //else {
-      // in case the table wasn't found in the schema, now is the time to add it
-      
-      // Check if the table have at least one column.
-      if (!$table->countColumns()) {
-        $msg = "A table must have at least one column before creation";
-        throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
-      }
-      
-      // Before create, check if the table is still on the tables class variable
-      // in case it is, cause a flush, then, create the table
-      // This situation might happen when the user marked a table for deletion and
-      // tries to create a table with the same name before sending a flush
-      $t = $this->trulyHasTable($table->getName());
-      if ($t instanceof Table) {
-        //check if the table should be deleted...
-        if ($t->shouldDelete()) {
-          // ... if yes, send a flush to remove the table from the database
-          $this->getConnection()->driver->flush($this);
-          // and after this, create the new table that have the same name
-        }
-      }
-      $table->markForCreation();
-      $table->setFather($this);
+    
+    // in case the table wasn't found in the schema, now is the time to add it
 
-      // table is ready to be added to the schema object
-      $this->tables[] = $table;
-    //}
+    // Check if the table have at least one column.
+    if (!$table->countColumns()) {
+      $msg = "A table must have at least one column before creation";
+      throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
+    }
+
+    // Before create, check if the table is still on the tables class variable
+    // in case it is, cause a flush, then, create the table
+    // This situation might happen when the user marked a table for deletion and
+    // tries to create a table with the same name before sending a flush
+    $t = $this->trulyHasTable($table->getName());
+    if ($t instanceof Table) {
+      //check if the table should be deleted...
+      if ($t->shouldDelete()) {
+        // ... if yes, send a flush to remove the table from the database
+        $this->getConnection()->driver->flush($this);
+        // and after this, create the new table that have the same name
+      }
+    }
+    $table->markForCreation();
+    $table->setFather($this);
+
+    // table is ready to be added to the schema object
+    $this->tables[] = $table;
   }
   
   public function dropTable($tableName) {

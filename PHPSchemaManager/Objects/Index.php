@@ -101,11 +101,11 @@ class Index
   }
   
   /**
-   * How manu columns this index holds
+   * How many columns this index holds
    * 
    * @return int
    */
-  public function columnCount() {
+  public function countColumns() {
     return count($this->columns);
   }
   
