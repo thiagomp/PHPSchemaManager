@@ -335,20 +335,20 @@ class ManagerTest
     
     $this->assertTrue($bookIsbnIdx->shouldCreate());
     $this->assertTrue($bookIsbnIdx->isUniqueKey());
-    $this->assertEquals(1, $bookIsbnIdx->columnCount());
+    $this->assertEquals(1, $bookIsbnIdx->countColumns());
     
     $bookTable->addIndex($bookIsbnIdx);
 
     $this->sm->flush();
     $this->assertTrue($bookIsbnIdx->isSynced(), "The status os the index should be synced by now");
     $this->assertTrue($bookIsbnIdx->isUniqueKey());
-    $this->assertEquals(1, $bookIsbnIdx->columnCount());
+    $this->assertEquals(1, $bookIsbnIdx->countColumns());
     
     // retrieve the index into a new object
     $index = $this->sm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('bookIsbnIdx');
     $this->assertTrue($index->isSynced());
     $this->assertTrue($index->isUniqueKey(), "the type of this index is actually {$index->getType()} instead of Unique");
-    $this->assertEquals(1, $index->columnCount());
+    $this->assertEquals(1, $index->countColumns());
     
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Index', $bookTable->hasIndex('bookIsbnIdx'), "Check if the table book has an index called bookIsbnIdx");
     
@@ -359,11 +359,48 @@ class ManagerTest
     $this->sm->hasSchema(self::DBTEST)->hasTable('book')->addIndex($wrongIndex);
     $this->sm->flush();
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Index', $bookTable->hasIndex('wrongIdx'), "Check if the table book has an index called wrongIdx");
-    
-    //echo PHP_EOL;
-    //echo $this->sm->hasSchema(self::DBTEST)->printTxt();die;
+
   }
 
+  public function testAddMultipleIndex() {
+    $bookTable = $this->sm->hasSchema(self::DBTEST)->hasTable('book');
+    
+    $titleIdx = new \PHPSchemaManager\Objects\Index('titleIdx');
+    $titleIdx->addColumn($bookTable->hasColumn('title'));
+    
+    $isbnIdx = new \PHPSchemaManager\Objects\Index('isbnIdx');
+    $isbnIdx->addColumn($bookTable->hasColumn('isbn'));
+    $isbnIdx->setAsUniqueKey();
+    
+    $multIdx = new \PHPSchemaManager\Objects\Index('multIdx');
+    $multIdx->addColumn($bookTable->hasColumn('title'));
+    $multIdx->addColumn($bookTable->hasColumn('language'));
+    
+    $bookTable->addIndex($titleIdx);
+    $bookTable->addIndex($isbnIdx);
+    $bookTable->addIndex($multIdx);
+    
+    $this->sm->flush();
+    
+    $this->assertEquals(6, $this->sm->hasSchema(self::DBTEST)->hasTable('book')->countIndexes(), "'book' table was expected to have 5 indexes\n" . $this->sm->hasSchema(self::DBTEST)->hasTable('book')->printTxt());
+    $this->assertTrue($this->sm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('titleIdx')->isRegularKey(), "'titleIdx' index is expected to be a Regular one");
+    $this->assertTrue($this->sm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('isbnIdx')->isUniqueKey(), "'isbnIdx' index is expected to be a Unique Key index");
+    $this->assertEquals(2, $this->sm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('multIdx')->countColumns(), "'multIdx' index is expected to have 2 columns associated with it");
+  }
+  
+  public function testAddRepeatedIndex() {
+    $bookTable = $this->sm->hasSchema(self::DBTEST)->hasTable('book');
+    
+    $isbnIdx = new \PHPSchemaManager\Objects\Index('isbnIdx');
+    $isbnIdx->addColumn($bookTable->hasColumn('isbn'));
+    $bookTable->addIndex($isbnIdx);
+    
+    $this->sm->flush();
+    
+    $this->assertEquals(6, $this->sm->hasSchema(self::DBTEST)->hasTable('book')->countIndexes(), "'book' table was expected to have 5 indexes\n" . $this->sm->hasSchema(self::DBTEST)->hasTable('book')->printTxt());
+    $this->assertTrue($this->sm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('isbnIdx')->isRegularKey(), "'isbnIdx' index is expected to be a Regular one");
+  }
+  
   public function testChangeIndex() {
     $bookTable = $this->sm->hasSchema(self::DBTEST)->hasTable("book");
     
@@ -379,12 +416,12 @@ class ManagerTest
     $bookIsbnIdx->addColumn($bookTable->hasColumn('title'));
     
     $this->assertTrue($bookIsbnIdx->shouldAlter());
-    $this->assertEquals(2, $bookIsbnIdx->columnCount());
+    $this->assertEquals(2, $bookIsbnIdx->countColumns());
     
     $this->sm->flush();
     $this->assertTrue($bookIsbnIdx->isSynced(), "The status os the index should be synced by now");
     $this->assertTrue($bookIsbnIdx->isUniqueKey());
-    $this->assertEquals(2, $bookIsbnIdx->columnCount());
+    $this->assertEquals(2, $bookIsbnIdx->countColumns());
     
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Index', $bookTable->hasIndex('bookIsbnIdx'), "Check if the table book has an index called bookIsbnIdx after the change");
   }
