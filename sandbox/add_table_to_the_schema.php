@@ -48,7 +48,29 @@ $anotherColumn->setDefaultValue("EN");
 // now add the Column to the Table object
 $newTable->addColumn($anotherColumn);
 
+
+// add a title column
+$titleColumn = new \PHPSchemaManager\Objects\Column('title');
+$titleColumn->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+$titleColumn->setSize(250);
+
+// this column will not allow NULL as a valid value
+$titleColumn->forbidsNull();
+
+// add the title column to the table object
+$newTable->addColumn($titleColumn);
+
+
+// add a ISBN column to the table
+$isbnColumn = new \PHPSchemaManager\Objects\Column('isbn');
+$isbnColumn->setType(\PHPSchemaManager\Objects\Column::CHAR);
+$isbnColumn->setSize(13);
+
+$newTable->addColumn($isbnColumn);
+
 // Once the Table creation is done, its time to add the table to the Schema
+// The TRUE parameter will drop the table and create with the new definitions,
+// in case the table already exists
 $schema->addTable($newTable, TRUE);
 
 // Prints the table data
