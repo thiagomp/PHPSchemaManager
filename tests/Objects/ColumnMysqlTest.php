@@ -140,6 +140,15 @@ class ColumnMysqlTest
     $expectedString = "$columnName CHAR(11) NOT NULL COMMENT 'Created by PHPSchemaManager'";
     $ret[] = array($column, $expectedString);
     
+    $columnName = 'column_' . __FUNCTION__ . "_" . __LINE__;
+    $column = new \PHPSchemaManager\Objects\Column($columnName);
+    $column->setType(\PHPSchemaManager\Objects\Column::TEXT);
+    $column->setSize(10000);
+    $column->forbidsNull();
+    $column->setDefaultValue(\PHPSchemaManager\Objects\Column::NODEFAULTVALUE);
+    $expectedString = "$columnName TEXT(10000) NOT NULL COMMENT 'Created by PHPSchemaManager'";
+    $ret[] = array($column, $expectedString);
+    
     return $ret;
   }
   
