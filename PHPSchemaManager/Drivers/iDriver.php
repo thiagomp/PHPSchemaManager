@@ -11,6 +11,9 @@ interface iDriver {
   function dbFetchArray($result);
   function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table);
   
+  function setIgnoredSchemas(Array $schemaNames);
+  function setExclusiveSchema($schemaName);
+  
   /**
    * Retrieves how many rows there is in a table
    * 

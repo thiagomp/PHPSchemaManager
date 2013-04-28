@@ -5,11 +5,13 @@ class Manager
   extends Objects 
   implements iFather {
   
-  protected $ignoreSchemas = array();
+  protected $ignoredSchemas = array();
+  protected $exclusiveSchema = FALSE;
   protected $schemas = array();
   protected $firstFetchExecuted = FALSE;
   protected $connection;
-
+  protected $driver;
+  protected $goToDatabase = TRUE;
 
   const DEFULTCONNECTION = 'default';
   
@@ -234,14 +236,24 @@ class Manager
    * 
    * @param Array $schemaNames
    */
-  public function setIgnoreSchemas($schemaNames) {
-    $this->ignoreSchemas = $schemaNames;
+  public function setIgnoredSchemas($schemaNames) {
+    $this->ignoredSchemas = $schemaNames;
+    $this->getConnection()->driver->setIgnoredSchemas($this->getIgnoredSchemas());
   }
 
   public function getIgnoredSchemas() {
-    return $this->ignoreSchemas;
+    return $this->ignoredSchemas;
   }
   
+  public function setExclusiveSchema($schemaName) {
+    $this->exclusiveSchema = $schemaName;
+    $this->getConnection()->driver->setExclusiveSchema($this->getExclusiveSchema());
+  }
+
+  public function getExclusiveSchema() {
+    return $this->exclusiveSchema;
+  }
+
   public function printTxt() {
     
     $this->fetchFromDatabase();
@@ -269,14 +281,16 @@ class Manager
    */
   protected function fetchFromDatabase() {
     
-    if (empty($this->schemas)) {
+    if ($this->goToDatabase) {
       $conn = $this->getConnection();
       
       //gets all schemas found in this connection
-      foreach ($conn->driver->getSchemas($this->getIgnoredSchemas()) as $schema) {
+      foreach ($conn->driver->getSchemas() as $schema) {
         $this->addSchema($schema);
         $schema->setFather($this);
       }
+      
+      $this->goToDatabase = FALSE;
     }
   }
   

@@ -8,6 +8,8 @@ class DriverMysql
   protected $conn;
   protected $databaseSelected = FALSE;
   protected $linkIdentifier;
+  protected $exclusiveSchema = FALSE;
+  protected $ignoredSchemas = array();
 
 
   public function __construct(\PHPSchemaManager\Connection $conn) {
@@ -50,8 +52,10 @@ class DriverMysql
     return $this->databaseSelected;
   }
   
-  public function getSchemas(Array $ignoredSchemas = NULL) {
+  public function getSchemas() {
     $schemas = array();
+    $ignoredSchemas = $this->getIgnoredSchemas();
+    $exclusiveSchema = $this->getExclusiveSchema();
     
     // check how this environment should operate
     $lowerCaseTableNames = $this->checkLowerCaseTableNames();
@@ -65,12 +69,16 @@ class DriverMysql
       $lowerCaseTableNames ? $schema->turnCaseSensitiveNamesOn() : $schema->turnCaseSensitiveNamesOff();
       
       // check if the schema should be ignored
-      if (!in_array($schema->getName(), $ignoredSchemas)) {
-        $this->getTables($schema);
-      }
-      else {
+      if (in_array($schema->getName(), $ignoredSchemas) ||
+            (!empty($exclusiveSchema) &&  
+              (($lowerCaseTableNames && $exclusiveSchema != $schema->getName()) || (!$lowerCaseTableNames && strtolower($exclusiveSchema) != strtolower($schema->getName())))
+            )
+          ) {
         // ignores this schema
         $schema->ignore();
+      }
+      else {
+        $this->getTables($schema);
       }
       
       $schema->persisted();
@@ -138,6 +146,22 @@ class DriverMysql
     $sql = "SELECT COUNT(*) AS num_rows FROM $table";
     $res = $this->dbFetchArray($this->dbQuery($sql));
     return (int)$res['num_rows'];
+  }
+  
+  public function setExclusiveSchema($schemaName) {
+    $this->exclusiveSchema = $schemaName;
+  }
+  
+  public function getExclusiveSchema() {
+    return $this->exclusiveSchema;
+  }
+  
+  public function setIgnoredSchemas(array $schemaNames) {
+    $this->ignoredSchemas = $schemaNames;
+  }
+  
+  public function getIgnoredSchemas() {
+    return $this->ignoredSchemas;
   }
   
   public function flush(\PHPSchemaManager\Objects\Schema $schema) {

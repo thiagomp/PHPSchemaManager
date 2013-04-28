@@ -24,7 +24,7 @@ class ManagerTest
     $conn->hostname = '127.0.0.1';
     
     $this->sm = \PHPSchemaManager\PHPSchemaManager::getManager($conn);
-    $this->sm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+    $this->sm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     
     $this->conn = $conn;
   }
@@ -148,6 +148,60 @@ class ManagerTest
   
   public function testSchemaCanBeFound() {
     $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    $this->assertInstanceOf("\PHPSchemaManager\Objects\Manager", $m);
+  }
+  
+  public function testExclusiveSchema() {
+    $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    
+    $schemasTest = array('schemaTestA', 'schemaTestB', 'schemaTestC');
+    
+    foreach($schemasTest as $schemaName) {
+      $schema = new \PHPSchemaManager\Objects\Schema($schemaName);
+      $m->addSchema($schema);
+    }
+    $m->flush();
+    
+    $m->setExclusiveSchema('schemaTestA');
+    
+    $this->assertTrue($m->hasSchema('schemaTestB')->shouldBeIgnored(), "The schema 'schemaTestB' should be ignored");
+    $this->assertTrue($m->hasSchema('schemaTestC')->shouldBeIgnored(), "The schema 'schemaTestC' should be ignored");
+    $this->assertFalse($m->hasSchema('schemaTestA')->shouldBeIgnored(), "The schema 'schemaTestA' should not be ignored");
+    
+    // remove the ignore instruction, so these schemas can be dopped
+    $m->hasSchema('schemaTestB')->regard();
+    $m->hasSchema('schemaTestC')->regard();
+    
+    foreach($schemasTest as $schemaName) {
+      $m->dropSchema($schemaName);
+    }
+    $m->flush();
+  }
+  
+  public function testExclusiveAndIgnoredSchema() {
+    $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    
+    $schemasTest = array('schemaTestA', 'schemaTestB', 'schemaTestC', 'schemaTestD', 'schemaTestE');
+    
+    foreach($schemasTest as $schemaName) {
+      $schema = new \PHPSchemaManager\Objects\Schema($schemaName);
+      $m->addSchema($schema);
+    }
+    $m->flush();
+    
+    $m->setIgnoredSchemas(array('schemaTestB', 'schemaTestC', 'schemaTestD'));
+    $m->setExclusiveSchema('schemaTestE');
+    
+    $this->assertTrue($m->hasSchema('schemaTestA')->shouldBeIgnored(), "The schema 'schemaTestB' should be ignored");
+    $this->assertTrue($m->hasSchema('schemaTestB')->shouldBeIgnored(), "The schema 'schemaTestC' should be ignored");
+    $this->assertTrue($m->hasSchema('schemaTestC')->shouldBeIgnored(), "The schema 'schemaTestB' should be ignored");
+    $this->assertTrue($m->hasSchema('schemaTestD')->shouldBeIgnored(), "The schema 'schemaTestC' should be ignored");
+    $this->assertFalse($m->hasSchema('schemaTestE')->shouldBeIgnored(), "The schema 'schemaTestA' should not be ignored");
+    
+    foreach($schemasTest as $schemaName) {
+      $m->dropSchema($schemaName);
+    }
+    $m->flush();
   }
   
   public function testReplaceTable() {
@@ -297,7 +351,7 @@ class ManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
-    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+    $newSm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertEquals(222, $newSm->hasSchema(self::DBTEST)->hasTable("book")->hasColumn("title")->getSize(), "Check if the title size was correctly saved to the database after changing it by doing an operation altogether");
     
     // try another change
@@ -306,7 +360,7 @@ class ManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
-    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+    $newSm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertFalse($newSm->hasSchema(self::DBTEST)->hasTable("book")->hasColumn("language")->isNullAllowed(), "Check if the colum accepts Null after the change was persisted in the database");
   }
   
@@ -457,7 +511,7 @@ class ManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
-    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+    $newSm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertFalse($newSm->hasSchema(self::DBTEST)->hasTable('book')->hasIndex('wrongIdx'));
   }
   
@@ -472,7 +526,7 @@ class ManagerTest
     $this->sm->flush();
     
     $newSm = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
-    $newSm->setIgnoreSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+    $newSm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     $this->assertFalse($newSm->hasSchema(self::DBTEST)->hasTable('book'), "Check if the book table was really dropped from the database");
     $this->assertTrue($bookTable->isDeleted(), "The object should be marked as deleted");
     $this->assertFalse($bookTable->hasColumn('isbn'), "Columns from the deleted table cannot be found by hasColumn");
