@@ -267,13 +267,6 @@ class ManagerTest
   }
   
   /**
-   * @expectedException \PHPSchemaManager\Exceptions\SchemaException
-   */
-  public function testTableWithoutColumn() {
-    $this->sm->hasSchema(self::DBTEST)->addTable(new \PHPSchemaManager\Objects\Table("blablabla"));
-  }
-  
-  /**
    * @dataProvider addColumnProvider
    */
   public function testAddColumn($column, $name) {
