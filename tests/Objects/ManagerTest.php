@@ -322,6 +322,12 @@ class ManagerTest
     $newColumn->setType(\PHPSchemaManager\Objects\Column::INT);
     $newColumn->setSize(8);
     $ret[] = array($newColumn, $name);
+
+    $name = 'summary';
+    $newColumn = new \PHPSchemaManager\Objects\Column($name);
+    $newColumn->setType(\PHPSchemaManager\Objects\Column::TEXT);
+    $newColumn->setSize(10000);
+    $ret[] = array($newColumn, $name);
     
     return $ret;
   }

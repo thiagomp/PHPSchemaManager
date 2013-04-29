@@ -25,6 +25,12 @@
           "size": "3",
           "allownull": "no",
           "defaultvalue": "en"
+        },
+        "summary": {
+          "type": "text",
+          "size": "0",
+          "allownull": "yes",
+          "defaultvalue": "null"
         }
       },
 
