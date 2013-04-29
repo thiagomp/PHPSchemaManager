@@ -7,7 +7,8 @@ namespace PHPSchemaManager\Objects;
  * @author thiago
  */
 class Index
-  extends Objects {
+  extends Objects
+  implements iObjectEvents {
   
   protected $indexName;
   
@@ -107,6 +108,14 @@ class Index
    */
   public function countColumns() {
     return count($this->columns);
+  }
+  
+  public function onDelete() {
+    $this->father->markForAlter();
+  }
+
+  public function onDestroy() {
+    //do nothing
   }
   
   public function printTxt() {

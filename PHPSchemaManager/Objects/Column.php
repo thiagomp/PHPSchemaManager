@@ -7,7 +7,8 @@ namespace PHPSchemaManager\Objects;
  * @author thiago
  */
 class Column
-  extends Objects {
+  extends Objects
+  implements iObjectEvents {
   
   protected $name = '';
   protected $type;
@@ -290,6 +291,14 @@ class Column
    */
   public function isNumericType() {
     return in_array($this->getType(), $this->getNumericTypes());
+  }
+
+  public function onDelete() {
+    $this->father->markForAlter();
+  }
+
+  public function onDestroy() {
+    //do nothing
   }
   
   /**

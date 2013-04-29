@@ -119,7 +119,7 @@ class Schema
   public function dropTable($tableName) {
     $table = $this->hasTable($tableName);
     if (FALSE !== $table) {
-      $table->markForDeletion();
+      $table->drop();
     }
     else {
       throw new \PHPSchemaManager\Exceptions\SchemaException("Table $tableName couldn't be dropped since it wasn't found in the schema '$this'");
@@ -127,7 +127,7 @@ class Schema
     
     return TRUE;
   }
-
+ 
   public function informChange() {
     // do nothing
   }

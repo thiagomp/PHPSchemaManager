@@ -130,7 +130,7 @@ class Manager
     $schema = $this->hasSchema($schemaName);
     
     if (FALSE !== $schema) {
-      $schema->markForDeletion();
+      $schema->drop();
     }
     else {
       $msg = "Schema '$schemaName' couldn't be dropped since it wasn't found in the currnet connection";

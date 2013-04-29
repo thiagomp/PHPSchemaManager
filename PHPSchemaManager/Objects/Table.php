@@ -84,8 +84,7 @@ class Table
   public function dropColumn($columnName) {
     $column = $this->hasColumn($columnName);
     if (FALSE !== $column) {
-      $column->markForDeletion();
-      $this->markForAlter();
+      $column->drop();
     }
     else {
       throw new \PHPSchemaManager\Exceptions\TableException("Column $columnName can't be dropped since it wasn't found in the table $this");
@@ -155,8 +154,7 @@ class Table
   public function dropIndex($indexName) {
     $index = $this->hasIndex($indexName);
     if (FALSE !== $index) {
-      $index->markForDeletion();
-      $this->markForAlter();
+      $index->drop();
     }
     else {
       throw new \PHPSchemaManager\Exceptions\TableException("Index $indexName can't be dropped since it wasn't found in the table $this");
@@ -204,6 +202,8 @@ class Table
       /* @var $index \PHPSchemaManager\Objects\Index */
       $index->markForDeletion();
     }
+    
+    $this->father->markForAlter();
   }
 
   public function onDestroy() {

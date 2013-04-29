@@ -100,13 +100,20 @@ class Objects {
     $this->markAsSynced();
   }
   
+  /**
+   * Mark this object to be dropped on the next flush
+   */
+  public function drop() {
+    $this->markForDeletion();
+  }
+  
   public function destroy() {
     if (!$this->isDeleted()) {
       $this->shouldDelete();
       $this->requestFlush();
     }
 
-    // trigger the onDelete method, in case the object implements it
+    // trigger the onDestroy method, in case the object implements it
     if ($this instanceof iObjectEvents) {
       $this->onDestroy();
     }
