@@ -237,6 +237,19 @@ class DriverMysql
     return TRUE;
   }
   
+  public function getVersion() {
+    $sql = "SHOW VARIABLES LIKE '%version%'";
+    $res = $this->dbQuery($sql);
+    
+    while ($row = mysql_fetch_assoc($res)) {
+      if ($row['Variable_name'] == 'version') {
+        return $row['Value'];
+      }
+    }
+    
+    return "Not found";
+  }
+  
   // Methods specific for MySQL
   protected function getColumns(\PHPSchemaManager\Objects\Table $table) {
     

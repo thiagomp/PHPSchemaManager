@@ -12,6 +12,8 @@ $conn->hostname = '127.0.0.1';
 $sm = \PHPSchemaManager\PHPSchemaManager::getManager($conn);
 $sm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
 
+echo "INFO: {$conn->dbms} {$sm->getDatabaseVersion()}" . PHP_EOL;
+
 if ($s = $sm->hasSchema('PHPSchemaManagerTest')) {
   // make sure that none of the tables that will be used in the test exists
   if ($s->hasTable("book")) {

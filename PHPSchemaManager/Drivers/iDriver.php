@@ -10,6 +10,7 @@ interface iDriver {
   function dbQuery($sql);
   function dbFetchArray($result);
   function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table);
+  function getVersion();
   
   function setIgnoredSchemas(Array $schemaNames);
   function setExclusiveSchema($schemaName);

@@ -275,6 +275,11 @@ class Manager
     return count($this->getSchemas());
   }
   
+  public function getDatabaseVersion() {
+    $conn = $this->getConnection();
+    return $conn->driver->getVersion();
+  }
+  
   /**
    * Go to the database and fetch information from the schemas
    * This method will be called only if the schemas are empty
