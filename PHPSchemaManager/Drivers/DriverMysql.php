@@ -20,7 +20,14 @@ class DriverMysql
   // Methods from the interface
   public function connect() {
     if (empty($this->linkIdentifier)) {
-      if (!$linkIdentifier = mysql_connect($this->conn->hostname, $this->conn->username, $this->conn->password)) {
+
+      $port = $this->conn->port;
+      
+      if (empty($port)) {
+        $port = "3306";
+      }
+      
+      if (!$linkIdentifier = mysql_connect("{$this->conn->hostname}:{$port}", $this->conn->username, $this->conn->password)) {
         throw new \SchemaManager\Exceptions\MysqlException("Failed to connect on {$this->conn->dbms} at {$this->conn->hostname} with {$this->conn->username} user");
       }
 

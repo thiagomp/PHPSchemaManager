@@ -22,6 +22,7 @@ class ManagerTest
     $conn->username = 'root';
     $conn->password = '';
     $conn->hostname = '127.0.0.1';
+    $conn->port = '3306';
     
     $this->sm = \PHPSchemaManager\PHPSchemaManager::getManager($conn);
     $this->sm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
