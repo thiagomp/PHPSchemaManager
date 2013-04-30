@@ -499,7 +499,7 @@ class DriverMysql
     }
     
     // removes the last comma + EOL from the clause. SQL is not like PHP...
-    $sql = substr($sql, 0, -3);
+    $sql = substr($sql, 0, (strlen(PHP_EOL)+1)*-1);
     
     $sql .= PHP_EOL . ")";
     
