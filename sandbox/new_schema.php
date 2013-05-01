@@ -32,4 +32,4 @@ echo "Databases found after adding a new one" . PHP_EOL;
 echo $manager->printTxt();
 
 // Asks the manager to persist the changes into the database
-$manager->flush();
+$schema->flush();

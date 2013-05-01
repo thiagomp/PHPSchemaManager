@@ -38,7 +38,7 @@ $table->addColumn($column);
 $schema->addTable($table);
 
 // persiste the changes into the database
-$manager->flush();
+$schema->flush();
 
 // print the schema to show the table is created in the database and the object is in sync with it.
 echo "Schema with the table to be dropped:" . PHP_EOL;
@@ -52,7 +52,7 @@ echo "Show schema tables after the dropTable command and before the flush:" . PH
 echo $schema->printTxt();
 
 // now flushes the changes
-$manager->flush();
+$schema->flush();
 
 // prints the schema again just to doube check
 echo "Show the schema before flushing the changes" . PHP_EOL;

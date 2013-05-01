@@ -77,7 +77,7 @@ $schema->addTable($newTable, TRUE);
 echo $newTable->printTxt();
 
 // Persist the data into the database
-$manager->flush();
+$schema->flush();
 
 // Prints the table data after the flush
 echo $newTable->printTxt();

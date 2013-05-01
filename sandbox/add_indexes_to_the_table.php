@@ -73,7 +73,7 @@ echo "Notice the Multiple Key Index created 'multIdx'\n";
 echo $bookTable->printTxt();
 
 // Commits the changes to the database
-$manager->flush();
+$schema->flush();
 
 // Prints the table to see the Multiple key Index created
 echo "Now see the state of the Indexes after the flush\n";
