@@ -20,7 +20,7 @@ class Manager
   }
   
   /**
-   * Add a new connection to the SchemaManager
+   * Add a new connection to the Manager
    * 
    * @param \PHPSchemaManager\Connection $connection
    */
@@ -75,8 +75,9 @@ class Manager
   public function addSchema(Schema $schema) {
     
     try{
-      $schema->setConnection($this->getConnection());
       $schemaName = $schema->isCaseSensitiveNamesOn() ? $schema->getName() : strtolower($schema->getName());
+      
+      $schema->setFather($this);
       
       // add the schema for this manager
       $this->schemas[$schemaName] = $schema;

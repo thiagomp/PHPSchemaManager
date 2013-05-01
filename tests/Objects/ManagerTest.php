@@ -128,7 +128,7 @@ class ManagerTest
     $this->assertEquals(2, $this->sm->hasSchema(self::DBTEST)->countTables());
     
     // commit the changes to the database
-    $this->sm->flush();
+    $schema->flush();
     
     // check if the object is correctly updated
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Table', $schema->hasTable('book'), "Failed to find the 'book' table");

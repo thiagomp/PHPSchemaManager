@@ -7,9 +7,6 @@ class Schema
   
   protected $configuration;
   protected $ignore = FALSE;
-  
-  /* @var $conn \PHPSchemaManager\Connection */
-  protected $conn;
 
 
   /**
@@ -105,7 +102,7 @@ class Schema
       //check if the table should be deleted...
       if ($t->shouldDelete()) {
         // ... if yes, send a flush to remove the table from the database
-        $this->getConnection()->driver->flush($this);
+        $this->father->getConnection()->driver->flush($this);
         // and after this, create the new table that have the same name
       }
     }
@@ -161,18 +158,6 @@ class Schema
   public function countTables() {
     return count($this->tables);
   }
-
-  public function setConnection(\PHPSchemaManager\Connection $conn) {
-    $this->conn = $conn;
-  }
-  
-  /**
-   * 
-   * @return \PHPSchemaManager\Connection
-   */
-  public function getConnection() {
-    return $this->conn;
-  }
   
   public function ignore() {
     $this->ignore = TRUE;
@@ -193,6 +178,13 @@ class Schema
     }
   }
 
+  public function flush() {
+    /* @var $conn \PHPSchemaManager\Connection */
+    $conn = $this->father->getConnection();
+    
+    $conn->driver->flush($this);
+  }
+  
   /**
    * returns a text representation of the Schema
    * 
