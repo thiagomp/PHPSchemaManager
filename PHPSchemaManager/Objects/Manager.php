@@ -264,7 +264,19 @@ class Manager
     $msg = $this->countSchemas() . " schemas were found in the connection '$conn' " .
             "({$conn->username}@{$conn->hostname}:{$conn->port} [{$conn->dbms}])" . PHP_EOL;
     foreach($this->getSchemas() as $schema) {
-      $msg .= "$schema ({$schema->countTables()} tables)" . PHP_EOL;
+      $msg .= "$schema ";
+      if ($schema->shouldBeIgnored()) {
+        $msg .= "(ignored)" . PHP_EOL;
+      }
+      elseif(0 === $schema->countTables()) {
+        $msg .= "(no tables)" . PHP_EOL;
+      }
+      elseif(1 === $schema->countTables()) {
+        $msg .= "(1 table)"  . PHP_EOL;
+      }
+      else {
+        $msg .= "({$schema->countTables()} tables)" . PHP_EOL;
+      }
     }
     $msg .= str_repeat("-", 30) . PHP_EOL . PHP_EOL;
     
