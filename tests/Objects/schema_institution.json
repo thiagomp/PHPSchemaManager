@@ -1,0 +1,70 @@
+{
+  "testinstitution": {
+    "class": {
+      "columns": {
+        "classId": {
+          "type": "serial",
+          "size": "10",
+          "allowNull": "no",
+          "defaultValue": ""
+        },
+        "name": {
+          "type": "varchar",
+          "size": "100",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        },
+        "maxStudents": {
+          "type": "int",
+          "size": "5",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        }
+      },
+
+      "keys": {
+        "PRIMARY": {
+          "type": "pk",
+          "columns": ["classId"]
+        }
+      }
+    },
+
+    "student": {
+      "columns": {
+        "studentID": {
+          "type": "serial",
+          "size": "10",
+          "allowNull": "no",
+          "defaultValue": ""
+        },
+        "name": {
+          "type": "varchar",
+          "size": "100",
+          "allowNull": "no",
+          "defaultValue": ""
+        },
+        "age": {
+          "type": "int",
+          "size": "3",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        },
+        "language": {
+          "type": "char",
+          "size": "2",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        }
+      },
+
+      "keys": {
+        "PRIMARY": {
+          "type": "pk",
+          "columns": ["studentID"]
+        }
+      }
+    }
+
+  }
+}

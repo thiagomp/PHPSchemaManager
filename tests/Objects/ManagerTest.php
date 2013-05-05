@@ -200,6 +200,10 @@ class ManagerTest
     $this->assertFalse($m->hasSchema('schemaTestE')->shouldBeIgnored(), "The schema 'schemaTestA' should not be ignored");
     
     foreach($schemasTest as $schemaName) {
+      $m->hasSchema($schemaName)->regard();
+    }
+    
+    foreach($schemasTest as $schemaName) {
       $m->dropSchema($schemaName);
     }
     $m->flush();
@@ -601,12 +605,90 @@ class ManagerTest
   }
   
   public function testImportFromJSONFile() {
-    $filePath = $expectedFile = __DIR__ . DIRECTORY_SEPARATOR . "database_example.json";
+    $filePath = __DIR__ . DIRECTORY_SEPARATOR . "database_example.json";
     $this->sm->loadFromJSONFile($filePath);
     
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Schema", $this->sm->hasSchema("Library"));
     
     // stores the data in the database
     $this->sm->flush();
+  }
+  
+  public function testUpdate2Schemas() {
+    // to make things easier, pre-defined schemas will be used
+    $filePath = __DIR__ . DIRECTORY_SEPARATOR . "schema_library.json";
+    
+    /* @var $schemaLibrary \PHPSchemaManager\Objects\Schema */
+    $schemaLibrary = $this->sm->loadFromJSONFile($filePath);
+    
+    $filePath = __DIR__ . DIRECTORY_SEPARATOR . "schema_institution.json";
+    /* @var $schemaInstitution \PHPSchemaManager\Objects\Schema */
+    $schemaInstitution = $this->sm->loadFromJSONFile($filePath);
+    
+    $reviewTable = new \PHPSchemaManager\Objects\Table('review');
+    
+    $columnReviewId = new \PHPSchemaManager\Objects\Column('reviewId');
+    $columnReviewId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    
+    $columnReviewerId = new \PHPSchemaManager\Objects\Column('reviewerId');
+    $columnReviewerId->setType(\PHPSchemaManager\Objects\Column::INT);
+    $columnReviewerId->setSize(10);
+    
+    $columnReview = new \PHPSchemaManager\Objects\Column('Review');
+    $columnReview->setType(\PHPSchemaManager\Objects\Column::TEXT);
+    
+    $indexReviewerId = new \PHPSchemaManager\Objects\Index('idxReviewerId');
+    
+    $reviewTable->addColumn($columnReviewId);
+    $reviewTable->addColumn($columnReviewerId);
+    $reviewTable->addColumn($columnReview);
+    $reviewTable->addIndex($indexReviewerId);
+    
+    $schemaLibrary->addTable($reviewTable);
+    
+    
+    $resourceTable = new \PHPSchemaManager\Objects\Table('resource');
+    
+    $columnResourceId = new \PHPSchemaManager\Objects\Column('resourceId');
+    $columnResourceId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    
+    $columnResourceName = new \PHPSchemaManager\Objects\Column('name');
+    $columnResourceName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+    $columnResourceName->setSize(100);
+    
+    $columnResourceCost = new \PHPSchemaManager\Objects\Column('cost');
+    $columnResourceCost->setType(\PHPSchemaManager\Objects\Column::DECIMAL);
+    $columnResourceCost->setSize("6,2");
+    
+    $indexResourceName = new \PHPSchemaManager\Objects\Index('idxResourceName');
+    
+    $resourceTable->addColumn($columnId);
+    $resourceTable->addColumn($columnReviewerId);
+    $resourceTable->addColumn($columnReview);
+    $resourceTable->addIndex($indexResourceName);
+    
+    $schemaInstitution->addTable($resourceTable);
+    
+    
+    $this->sm->addSchema($schemaLibrary);
+    $this->sm->addSchema($schemaInstitution);
+    
+    $this->sm->flush();
+    
+    
+    // Now check if the tables where correctly create, by using a new instance
+    // to the database
+    $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    
+    $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testLibrary')->hasTable('review'), "Table 'review' wasn't found in the schema 'testLibrary'");
+    $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testInstitution')->hasTable('resource'), "Table 'resource' wasn't found in the schema 'testInstitution'");
+    
+    $schemaInstitution->drop();
+    $schemaLibrary->drop();
+    
+    $this->sm->flush();
+    
+    $this->assertFalse($m->hasSchema('testLibrary'), "Schema 'testLibrary' should be deleted by now");
+    $this->assertFalse($m->hasSchema('testInstitution'), "Schema 'testInstitution' should be deleted by now");
   }
 }

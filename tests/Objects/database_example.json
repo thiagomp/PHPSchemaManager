@@ -5,36 +5,36 @@
       "bookId" : {
         "type": "serial",
         "size": 10,
-        "null allowed": "no",
-        "default value": ""
+        "allownull": "no",
+        "defaultvalue": ""
       },
       
       "title" : {
         "type": "varchar",
         "size": 100,
-        "null allowed": "no",
-        "default value": ""
+        "allownull": "no",
+        "defaultvalue": ""
       },
       
       "ISBN" : {
         "type": "char",
         "size": 10,
-        "null allowed": "no",
-        "default value": ""
+        "allownull": "no",
+        "defaultvalue": ""
       },
       
       "numberOfPages" : {
         "type": "int",
         "size": 5,
-        "null allowed": "yes",
-        "default value": "schemamanagernullvalue"
+        "allownull": "yes",
+        "defaultvalue": "schemamanagernullvalue"
       },
       
       "price": {
         "type": "decimal",
         "size": "9,2",
-        "null allowed": "yes",
-        "default value": ""
+        "allownull": "yes",
+        "defaultvalue": ""
       }
     },
     
@@ -61,15 +61,15 @@
       "authorId" : {
         "type": "serial",
         "size": 10,
-        "null allowed": "no",
-        "default value": ""
+        "allownull": "no",
+        "defaultvalue": ""
       },
 
       "name" : {
         "type": "varchar",
         "size": 100,
-        "null allowed": "no",
-        "default value": ""
+        "allownull": "no",
+        "defaultvalue": ""
       }
     },
     

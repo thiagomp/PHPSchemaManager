@@ -359,6 +359,7 @@ class Manager
       $column = new Column($columnName);
       
       foreach($columnDefinitions as $action => $definition) {
+        $action = strtolower($action);
         switch($action) {
           case 'type':
             $column->setType($definition);
@@ -366,15 +367,15 @@ class Manager
           case 'size':
             $column->setSize($definition);
             break;
-          case 'null allowed':
+          case 'allownull':
             strtolower($definition) == 'yes' ? $column->allowsNull() : $column->forbidsNull();
             break;
-          case 'default value';
+          case 'defaultvalue';
             $column->setDefaultValue($definition);
             break;
           default:
             $msg = "Action '$action' for column wasn't reconized while loading data from JSON file";
-            throw new \PHPSchemaManager\Exceptions\ManagerException();
+            throw new \PHPSchemaManager\Exceptions\ManagerException($msg);
         }
       }
     

@@ -1,0 +1,94 @@
+{
+  "testlibrary": {
+    "author": {
+      "columns": {
+        "authorId": {
+          "type": "serial",
+          "size": "10",
+          "allowNull": "no",
+          "defaultValue": ""
+        },
+        "name": {
+          "type": "varchar",
+          "size": "100",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        },
+        "nationality": {
+          "type": "char",
+          "size": "2",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        }
+      },
+
+      "keys": {
+        "PRIMARY": {
+          "type": "pk",
+          "columns": ["authorId"]
+        }
+      }
+    },
+
+    "book": {
+      "columns": {
+        "bookId": {
+          "type": "serial",
+          "size": "10",
+          "allowNull": "no",
+          "defaultValue": ""
+        },
+        "title": {
+          "type": "varchar",
+          "size": "255",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        },
+        "summary": {
+          "type": "text",
+          "size": "0",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        },
+        "nbPages": {
+          "type": "int",
+          "size": "5",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        }
+      },
+
+      "keys": {
+        "PRIMARY": {
+          "type": "pk",
+          "columns": ["bookId"]
+        }
+      }
+    },
+
+    "publisher": {
+      "columns": {
+        "publisherId": {
+          "type": "serial",
+          "size": "10",
+          "allowNull": "no",
+          "defaultValue": ""
+        },
+        "name": {
+          "type": "varchar",
+          "size": "100",
+          "allowNull": "yes",
+          "defaultValue": "NULL"
+        }
+      },
+
+      "keys": {
+        "PRIMARY": {
+          "type": "pk",
+          "columns": ["publisherId"]
+        }
+      }
+    }
+
+  }
+}
