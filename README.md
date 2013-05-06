@@ -76,16 +76,24 @@ You can get more information about how to use this library in the [Documentation
 
 Items to be developed. Not necessarily in this order.  
 
-[] Create a driver to connect with mysqli extension  
-[] Create a driver to connect with PDO  
-[] Integrate with sqlite  
-[] Integrate with PostgreSQL  
-[] Get information from [Constraints](http://dev.mysql.com/doc/refman/5.0/en/create-table-foreign-keys.html)  
-[] Detect if the user have permission to work with a certain Schema 
+- [] Create a driver to connect with mysqli extension  
+- [] Create a driver to connect with PDO  
+- [] Integrate with sqlite  
+- [] Integrate with PostgreSQL  
+- [] Get information from [Constraints](http://dev.mysql.com/doc/refman/5.0/en/create-table-foreign-keys.html)  
+- [] Detect if the user have permission to work with a certain Schema 
 
 ## Documentation
 
 You can get more info in the [PHPSchemaManager's Wiki](https://github.com/thiagomp/PHPSchemaManager/wiki/Documentation)
+
+## How to contribute
+
+Ways to contribute to this library development:
+
+* Fork this library and send your pull requests
+* If you have design skills, a logo for this project will be most appreciated
+* Do you know a free place to place the documentation for this project? I didn't like to so much the Wiki provided by Github.
 
 ## License
 
