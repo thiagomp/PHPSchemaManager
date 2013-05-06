@@ -12,13 +12,13 @@
           "type": "varchar",
           "size": "100",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         },
         "maxStudents": {
           "type": "int",
           "size": "5",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         }
       },
 
@@ -48,13 +48,13 @@
           "type": "int",
           "size": "3",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         },
         "language": {
           "type": "char",
           "size": "2",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         }
       },
 

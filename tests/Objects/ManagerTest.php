@@ -605,25 +605,25 @@ class ManagerTest
   }
   
   public function testImportFromJSONFile() {
-    $filePath = __DIR__ . DIRECTORY_SEPARATOR . "database_example.json";
-    $this->sm->loadFromJSONFile($filePath);
+    $filePathOrigin = __DIR__ . DIRECTORY_SEPARATOR . "database_example.json";
+    $this->sm->loadFromJSONFile($filePathOrigin);
     
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Schema", $this->sm->hasSchema("Library"));
     
     // stores the data in the database
     $this->sm->flush();
+    
+    $this->assertEquals(\PHPSchemaManager\Objects\Column::NULLVALUE,
+            $this->sm->hasSchema("Library")->hasTable("Book")->hasColumn("price")->getDefaultValue());
   }
   
   public function testUpdate2Schemas() {
     // to make things easier, pre-defined schemas will be used
-    $filePath = __DIR__ . DIRECTORY_SEPARATOR . "schema_library.json";
+    $filePathLibrary = __DIR__ . DIRECTORY_SEPARATOR . "schema_library.json";
+    $this->sm->loadFromJSONFile($filePathLibrary);
     
-    /* @var $schemaLibrary \PHPSchemaManager\Objects\Schema */
-    $schemaLibrary = $this->sm->loadFromJSONFile($filePath);
-    
-    $filePath = __DIR__ . DIRECTORY_SEPARATOR . "schema_institution.json";
-    /* @var $schemaInstitution \PHPSchemaManager\Objects\Schema */
-    $schemaInstitution = $this->sm->loadFromJSONFile($filePath);
+    $filePathInstitution = __DIR__ . DIRECTORY_SEPARATOR . "schema_institution.json";
+    $this->sm->loadFromJSONFile($filePathInstitution);
     
     $reviewTable = new \PHPSchemaManager\Objects\Table('review');
     
@@ -644,7 +644,7 @@ class ManagerTest
     $reviewTable->addColumn($columnReview);
     $reviewTable->addIndex($indexReviewerId);
     
-    $schemaLibrary->addTable($reviewTable);
+    $this->sm->hasSchema("testLibrary")->addTable($reviewTable);
     
     
     $resourceTable = new \PHPSchemaManager\Objects\Table('resource');
@@ -662,16 +662,12 @@ class ManagerTest
     
     $indexResourceName = new \PHPSchemaManager\Objects\Index('idxResourceName');
     
-    $resourceTable->addColumn($columnId);
+    $resourceTable->addColumn($columnResourceId);
     $resourceTable->addColumn($columnReviewerId);
     $resourceTable->addColumn($columnReview);
     $resourceTable->addIndex($indexResourceName);
     
-    $schemaInstitution->addTable($resourceTable);
-    
-    
-    $this->sm->addSchema($schemaLibrary);
-    $this->sm->addSchema($schemaInstitution);
+    $this->sm->hasSchema("testInstitution")->addTable($resourceTable);
     
     $this->sm->flush();
     
@@ -683,8 +679,8 @@ class ManagerTest
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testLibrary')->hasTable('review'), "Table 'review' wasn't found in the schema 'testLibrary'");
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testInstitution')->hasTable('resource'), "Table 'resource' wasn't found in the schema 'testInstitution'");
     
-    $schemaInstitution->drop();
-    $schemaLibrary->drop();
+    $this->sm->hasSchema("testInstitution")->drop();
+    $this->sm->hasSchema("testLibrary")->drop();
     
     $this->sm->flush();
     

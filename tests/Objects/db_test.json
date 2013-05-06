@@ -30,7 +30,7 @@
           "type": "text",
           "size": "0",
           "allownull": "yes",
-          "defaultvalue": "null"
+          "defaultvalue": ""
         }
       },
 
@@ -70,7 +70,7 @@
           "type": "int",
           "size": "4",
           "allownull": "yes",
-          "defaultvalue": "null"
+          "defaultvalue": ""
         }
       },
 

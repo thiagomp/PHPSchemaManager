@@ -12,13 +12,13 @@
           "type": "varchar",
           "size": "100",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         },
         "nationality": {
           "type": "char",
           "size": "2",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         }
       },
 
@@ -42,19 +42,19 @@
           "type": "varchar",
           "size": "255",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         },
         "summary": {
           "type": "text",
           "size": "0",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         },
         "nbPages": {
           "type": "int",
           "size": "5",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         }
       },
 
@@ -78,7 +78,7 @@
           "type": "varchar",
           "size": "100",
           "allowNull": "yes",
-          "defaultValue": "NULL"
+          "defaultValue": ""
         }
       },
 

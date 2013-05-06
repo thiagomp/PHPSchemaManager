@@ -327,7 +327,14 @@ class Column
    */
   public function printJSON($spaces = 0) {
     $json = '';
-    $defaultValue = $this->getNormalizedDefaultValue();
+    
+    // in the JSON file, we will save the NULL value as empty
+    if ($this->getNormalizedDefaultValue() == 'NULL') {
+      $defaultValue = '';
+    }
+    else {
+      $defaultValue = $this->getNormalizedDefaultValue();
+    }
     
     $json .= str_repeat(" ", $spaces) . "\"$this\": {" . PHP_EOL;
     $json .= str_repeat(" ", $spaces) . "  \"type\": \"{$this->getType()}\"," . PHP_EOL;

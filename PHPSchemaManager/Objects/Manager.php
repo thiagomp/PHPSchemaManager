@@ -371,6 +371,7 @@ class Manager
             strtolower($definition) == 'yes' ? $column->allowsNull() : $column->forbidsNull();
             break;
           case 'defaultvalue';
+            $definition = empty($definition) ? NULL : $definition;
             $column->setDefaultValue($definition);
             break;
           default:

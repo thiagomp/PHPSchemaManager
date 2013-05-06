@@ -27,7 +27,7 @@
         "type": "int",
         "size": 5,
         "allownull": "yes",
-        "defaultvalue": "schemamanagernullvalue"
+        "defaultvalue": ""
       },
       
       "price": {

@@ -36,4 +36,16 @@ if ($s = $sm->hasSchema('Library')) {
   echo "INFO: schema 'Library' have been removed" . PHP_EOL;
 }
 
+if ($s = $sm->hasSchema('testLibrary')) {
+  $sm->dropSchema("testLibrary");
+  
+  echo "INFO: schema 'testLibrary' have been removed" . PHP_EOL;
+}
+
+if ($s = $sm->hasSchema('testInstitution')) {
+  $sm->dropSchema("testInstitution");
+  
+  echo "INFO: schema 'testInstitution' have been removed" . PHP_EOL;
+}
+
 $sm->flush();
