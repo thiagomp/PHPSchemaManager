@@ -678,11 +678,13 @@ class ManagerTest
     
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testLibrary')->hasTable('review'), "Table 'review' wasn't found in the schema 'testLibrary'");
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testInstitution')->hasTable('resource'), "Table 'resource' wasn't found in the schema 'testInstitution'");
+    $this->assertEquals(4, $m->hasSchema("testLibrary")->countTables(), "The Schema 'testLibrary' is expected to have 4 tables");
+    $this->assertEquals(3, $m->hasSchema("testInstitution")->countTables(), "The Schema 'testInstitution' is expected to have 4 tables");
     
-    $this->sm->hasSchema("testInstitution")->drop();
-    $this->sm->hasSchema("testLibrary")->drop();
+    $m->hasSchema("testInstitution")->drop();
+    $m->hasSchema("testLibrary")->drop();
     
-    $this->sm->flush();
+    $m->flush();
     
     $this->assertFalse($m->hasSchema('testLibrary'), "Schema 'testLibrary' should be deleted by now");
     $this->assertFalse($m->hasSchema('testInstitution'), "Schema 'testInstitution' should be deleted by now");
