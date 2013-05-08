@@ -31,7 +31,7 @@ class Objects {
   protected $objectName = '';
   protected $action = self::ACTIONCREATE;
   protected $listeners;
-  protected $caseSentiveNames = FALSE;
+  protected $caseSentiveNames = TRUE;
   
   /* @var $father \PHPSchemaManager\Objects\Objects */
   protected $father = NULL;
@@ -152,10 +152,16 @@ class Objects {
   }
   
   public function isCaseSensitiveNamesOn() {
+    if (!($this instanceof Manager)) {
+      if ($father = $this->getFather()) {
+        $father->isCaseSensitiveNamesOn();
+      }      
+    }
+
     return $this->caseSentiveNames;
   }
   
-  public function setFather(Objects $father) {
+  public function setFather($father) {
     $this->father = $father;
   }
   

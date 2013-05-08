@@ -76,7 +76,7 @@ class Manager
   public function addSchema(Schema $schema) {
     
     try{
-      $schemaName = $schema->isCaseSensitiveNamesOn() ? $schema->getName() : strtolower($schema->getName());
+      $schemaName = $schema->getName();
       
       $schema->setFather($this);
       
@@ -106,7 +106,7 @@ class Manager
     foreach($this->schemas as $currentSchemaName => $schema) {
 
       /* @var $schema \SchemaManager\Objects\Schema*/
-      if ($currentSchemaName == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
+      if ($currentSchemaName == $schemaName || (!$this->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
         // schema is found, but first checks if it's marked to be deleted
         return $schema->shouldDelete() || $schema->isDeleted() ? FALSE : $schema;
       }
@@ -249,7 +249,7 @@ class Manager
   
   public function setExclusiveSchema($schemaName) {
     $this->exclusiveSchema = $schemaName;
-    $this->getConnection()->driver->setExclusiveSchema($this->getExclusiveSchema());
+    $this->getConnection()->driver->setExclusiveSchema($schemaName);
   }
 
   public function getExclusiveSchema() {
