@@ -34,7 +34,7 @@ class ManagerTest
     unset($this->sm);
   }
   
-  public function testState() {
+  public function testState() { 
     $authorTable = new \PHPSchemaManager\Objects\Table('author');
     $this->assertTrue($authorTable->shouldCreate(), "It should be [create], but it is [" . $this->getStatus() . "]");
     

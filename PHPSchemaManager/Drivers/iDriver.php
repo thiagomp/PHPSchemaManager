@@ -11,6 +11,7 @@ interface iDriver {
   function dbFetchArray($result);
   function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table);
   function getVersion();
+  function checkLowerCaseTableNames();
   
   function setIgnoredSchemas(Array $schemaNames);
   function setExclusiveSchema($schemaName);

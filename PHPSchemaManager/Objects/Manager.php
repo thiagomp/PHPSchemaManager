@@ -52,6 +52,7 @@ class Manager
 
     // stabilishes a connection
     $conn->driver->connect();
+    $conn->driver->checkLowerCaseTableNames() ? $this->turnCaseSensitiveNamesOn() : $this->turnCaseSensitiveNamesOff();
   }
   
   /**
