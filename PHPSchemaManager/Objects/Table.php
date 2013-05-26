@@ -202,8 +202,6 @@ class Table
       /* @var $index \PHPSchemaManager\Objects\Index */
       $index->markForDeletion();
     }
-    
-    $this->father->markForAlter();
   }
 
   public function onDestroy() {

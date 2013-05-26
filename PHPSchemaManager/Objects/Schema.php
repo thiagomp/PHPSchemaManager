@@ -125,7 +125,7 @@ class Schema
   }
  
   public function informChange() {
-    // do nothing
+    $this->markForAlter();
   }
   
   public function informDeletion(Objects $object) {
