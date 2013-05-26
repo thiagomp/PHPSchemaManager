@@ -43,7 +43,7 @@ class Schema
       /* @var $table \PHPSchemaManager\Objects\Table */
       
       // take into consideration if this schema is case sensitve or not
-      if ($table == $tableName  || (!$this->isCaseSensitiveNamesOn() && strtolower($table) == strtolower($tableName))) {
+      if ( $table->nameCompare($tableName)) {
         
         // check if the table is present even if it's marked to be deleted
         if ($this->trulyCheckIfHasTable) {
@@ -225,7 +225,7 @@ class Schema
   protected function alterTable(Table $newTable) {
     foreach ($this->tables as $idx => $currentTable) {
       /* @var $currentTable \PHPSchemaManager\Objects\Table */
-      if ($newTable->getName() == $currentTable->getName()) {
+      if ($currentTable->nameCompare($newTable->getName())) {
         
         // compare the columns. For the existing ones, alter the missing, remove
         foreach($currentTable->getColumns() as $currentColumn) {
@@ -236,7 +236,7 @@ class Schema
           
           foreach($newTable->getColumns() as $newColumn) {
             /* @var $currentColumn \PHPSchemaManager\Objects\Column */
-            if ($newColumn->getName() == $currentColumn->getName()) {
+            if ($currentColumn->nameCompare($newColumn->getName())) {
               
               // To be able to set a Object to be altered, it must be first in the synced stated
               // that's why I'm using the setAction method directly
@@ -268,7 +268,7 @@ class Schema
   
   protected function removeTable(Table $table) {
     foreach($this->tables as $idx => $currentTable) {
-      if ($table->getName() == $currentTable->getName()) {
+      if ($currentTable->nameCompare($table->getName())) {
         unset($this->tables[$idx]);
         return TRUE;
       }

@@ -12,8 +12,6 @@ interface iDriver {
   function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table);
   function getVersion();
   
-  function setIgnoredSchemas(Array $schemaNames);
-  
   /**
    * Retrieves how many rows there is in a table
    * 

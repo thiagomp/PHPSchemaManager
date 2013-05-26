@@ -140,18 +140,6 @@ class DriverMysql
     return (int)$res['num_rows'];
   }
   
-  public function getExclusiveSchema() {
-    return $this->exclusiveSchema;
-  }
-  
-  public function setIgnoredSchemas(array $schemaNames) {
-    $this->ignoredSchemas = $schemaNames;
-  }
-  
-  public function getIgnoredSchemas() {
-    return $this->ignoredSchemas;
-  }
-  
   public function flush(\PHPSchemaManager\Objects\Schema $schema) {
     // if the schema should be ignored, just mark it as synced and move on
     if ($schema->shouldBeIgnored()) {

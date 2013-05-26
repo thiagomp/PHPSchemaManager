@@ -77,17 +77,6 @@ class Manager
   public function addSchema(Schema $schema) {
     $this->fetchFromDatabase();
     
-    /*
-    //Check if the Schema already exists in the database
-    if ($currentSchema = $this->hasSchema($schema->getName())) {
-      //Get the tables from the new Schema and add them to the current Schema
-      foreach($schema->getTables() as $table) {
-        $currentSchema->addt
-      }
-    }
-     *
-     */
-    
     try{
       $schemaName = strtolower($schema->getName());
       // check if there's a exclusive schema...
@@ -98,7 +87,7 @@ class Manager
         }
       }
       
-      //check if there's a list of schemas to be ignored
+      // check if there's a list of schemas to be ignored
       if ($ignoredSchemas = $this->getIgnoredSchemas()) {
         foreach ($ignoredSchemas as $ignoredSchemaName) {
           if ($schema->nameCompare($ignoredSchemaName)) {
@@ -136,8 +125,7 @@ class Manager
 
       /* @var $schema \PHPSchemaManager\Objects\Schema */
       
-      //if ($currentSchemaName == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
-      if ($schema->getName() == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($schema->getName()) == strtolower($schemaName))) {
+      if ($schema->nameCompare($schemaName)) {
         
         if ($this->shouldIgnoreDeleted()) {
           return $schema;
@@ -213,7 +201,7 @@ class Manager
     if (!$json = json_decode($jsonString, true)) {
       
       $msg = "An error ocurred while processing the JSON file: ";
-      $this->getJSONErrorMessage(json_last_error());
+      $msg .= $this->getJSONErrorMessage(json_last_error());
       
       throw new \PHPSchemaManager\Exceptions\FileException($msg);
     }
@@ -261,7 +249,6 @@ class Manager
     $this->ignoreDeleted();
     if ($this->hasSchema($schema->getName())) {
       $this->regardDeleted();
-    //if (array_key_exists($schema->getName(), $this->schemas)) {
       unset($this->schemas[$schema->getName()]);
       return TRUE;
     }
@@ -280,13 +267,20 @@ class Manager
    */
   public function setIgnoredSchemas($schemaNames) {
     $this->ignoredSchemas = $schemaNames;
-    $this->getConnection()->driver->setIgnoredSchemas($this->getIgnoredSchemas());
   }
 
   public function getIgnoredSchemas() {
     return empty($this->ignoredSchemas) ? FALSE: $this->ignoredSchemas;
   }
   
+  /**
+   * Inform which schema will be used exclusively by the library.
+   * Once this is informed, all the details of the other schemas will be
+   * ignored. This configuration can be good for performance, in case you have
+   * lots of schemas in the connection
+   * 
+   * @param type $schemaName
+   */
   public function setExclusiveSchema($schemaName) {
     $this->exclusiveSchema = $schemaName;
   }
