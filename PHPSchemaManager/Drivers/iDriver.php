@@ -11,6 +11,7 @@ interface iDriver {
   function dbFetchArray($result);
   function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table);
   function getVersion();
+  function checkLowerCaseTableNames();
   
   /**
    * Retrieves how many rows there is in a table

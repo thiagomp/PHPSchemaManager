@@ -22,7 +22,7 @@ class ManagerTest
     $conn->username = 'root';
     $conn->password = '';
     $conn->hostname = '127.0.0.1';
-    $conn->port = '3306';
+    $conn->port = '33306';
     
     $this->sm = \PHPSchemaManager\PHPSchemaManager::getManager($conn);
     $this->sm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
@@ -34,7 +34,7 @@ class ManagerTest
     unset($this->sm);
   }
   
-  public function testState() {
+  public function testState() { 
     $authorTable = new \PHPSchemaManager\Objects\Table('author');
     $this->assertTrue($authorTable->shouldCreate(), "It should be [create], but it is [" . $this->getStatus() . "]");
     

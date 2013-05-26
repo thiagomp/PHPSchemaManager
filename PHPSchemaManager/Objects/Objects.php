@@ -136,10 +136,16 @@ class Objects {
   }
   
   public function isCaseSensitiveNamesOn() {
+    if (!($this instanceof Manager)) {
+      if ($father = $this->getFather()) {
+        $father->isCaseSensitiveNamesOn();
+      }      
+    }
+
     return $this->caseSentiveNames;
   }
   
-  public function setFather(Objects $father) {
+  public function setFather($father) {
     $this->father = $father;
   }
   
