@@ -364,22 +364,6 @@ class DriverMysql
     $this->selectDb($currentSelectedDb);
   }
   
-  public function checkLowerCaseTableNames() {
-    //http://dev.mysql.com/doc/refman/5.0/en/identifier-case-sensitivity.html
-    $sql = "SHOW VARIABLES LIKE 'lower_case_table_names'";
-    
-    $res = $this->dbQuery($sql);
-    $row = mysql_fetch_assoc($res);
-    
-    //if 1 or 2, turnCaseSensitiveNamesOff otherwise, turnCaseSensitiveNamesOn
-    if (0 === (int)$row['Value']) {
-      return TRUE;
-    }
-    else {
-      return FALSE;
-    }
-  }
-  
   protected function alterTable(\PHPSchemaManager\Objects\Table $table) {
     $this->selectDb();
     $sql = "ALTER TABLE $table" . PHP_EOL;
