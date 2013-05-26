@@ -89,7 +89,7 @@ class Column
     
     // save the type
     $this->type = $type;
-    //TODO $this->typeStrategy()->configure();
+
     $obj = $this->typeStrategy();
     if (!empty($obj)) {
       $obj->configure();
@@ -123,6 +123,7 @@ class Column
 
     }
     else {
+      // normalize the size variable to be integer
       $size = (int)$size;
     }
     
@@ -156,7 +157,7 @@ class Column
   public function forbidsNull() {
     $this->null = FALSE;
 
-    // if the default value is NULL it will be set to empty
+    // if the current default value for this column is NULL, it will be set to empty
     if (self::NULLVALUE == $this->getDefaultValue()) {
       $this->setDefaultValue("");
     }
@@ -194,10 +195,8 @@ class Column
     
     // check if the informed default value is under the permited size
     if (self::NULLVALUE != $value && self::CUSTOMVALUE != $value && self::NODEFAULTVALUE != $value) {
-      $numericTypes = $this->getNumericTypes();
-      $stringTypes = $this->getStringTypes();
 
-      $sizeTypes = array_merge($numericTypes, $stringTypes);
+      $sizeTypes = array_merge($this->getNumericTypes(), $this->getStringTypes());
       if (FALSE !== array_search($this->getType(), $sizeTypes) ) {
         if (mb_strlen($value) > $this->getSize()) {
           $msg = "The informed default value [{$value}] for column '$this' is bigger [".(mb_strlen($value))."] than the size defined for this column allows [{$this->getSize()}]";
@@ -294,7 +293,8 @@ class Column
   }
 
   public function onDelete() {
-    $this->father->markForAlter();
+    //TODO maybe there's a need to inform Index that a column is being deleted
+    //do nothing
   }
 
   public function onDestroy() {

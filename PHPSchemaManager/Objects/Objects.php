@@ -63,6 +63,11 @@ class Objects {
       if ($this instanceof iObjectEvents) {
         $this->onDelete();
       }
+      
+      // in case this object have a father, inform him about the change
+      if ($father = $this->getFather()) {
+        $father->informChange($this);
+      }
     }
   }
   
