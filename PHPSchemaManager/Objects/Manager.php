@@ -12,6 +12,7 @@ class Manager
   protected $connection;
   protected $driver;
   protected $goToDatabase = TRUE;
+  protected $fetchAllowed = TRUE;
 
   const DEFULTCONNECTION = 'default';
   
@@ -52,6 +53,7 @@ class Manager
 
     // stabilishes a connection
     $conn->driver->connect();
+    $conn->driver->checkLowerCaseTableNames();
   }
   
   /**
@@ -73,9 +75,37 @@ class Manager
    * @return Boolean TRUE if the schema could be added or FALSE if the schema couldn't be added
    */
   public function addSchema(Schema $schema) {
+    $this->fetchFromDatabase();
+    
+    /*
+    //Check if the Schema already exists in the database
+    if ($currentSchema = $this->hasSchema($schema->getName())) {
+      //Get the tables from the new Schema and add them to the current Schema
+      foreach($schema->getTables() as $table) {
+        $currentSchema->addt
+      }
+    }
+     *
+     */
     
     try{
-      $schemaName = $schema->isCaseSensitiveNamesOn() ? $schema->getName() : strtolower($schema->getName());
+      $schemaName = strtolower($schema->getName());
+      // check if there's a exclusive schema...
+      if ($exclusiveSchema = $this->getExclusiveSchema()) {
+        // if yes, mark all other schemas to be ignored
+        if (!$schema->nameCompare($exclusiveSchema)) {
+          $schema->ignore();
+        }
+      }
+      
+      //check if there's a list of schemas to be ignored
+      if ($ignoredSchemas = $this->getIgnoredSchemas()) {
+        foreach ($ignoredSchemas as $ignoredSchemaName) {
+          if ($schema->nameCompare($ignoredSchemaName)) {
+            $schema->ignore();
+          }
+        }
+      }
       
       $schema->setFather($this);
       
@@ -104,8 +134,15 @@ class Manager
     // try to get the schema from the class
     foreach($this->schemas as $currentSchemaName => $schema) {
 
-      /* @var $schema \SchemaManager\Objects\Schema*/
-      if ($currentSchemaName == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
+      /* @var $schema \PHPSchemaManager\Objects\Schema */
+      
+      //if ($currentSchemaName == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($currentSchemaName) == strtolower($schemaName))) {
+      if ($schema->getName() == $schemaName || (!$schema->isCaseSensitiveNamesOn() && strtolower($schema->getName()) == strtolower($schemaName))) {
+        
+        if ($this->shouldIgnoreDeleted()) {
+          return $schema;
+        }
+        
         // schema is found, but first checks if it's marked to be deleted
         return $schema->shouldDelete() || $schema->isDeleted() ? FALSE : $schema;
       }
@@ -122,7 +159,8 @@ class Manager
    * @return \PHPSchemaManager\Objects\Schema[]
    */
   public function getSchemas() {
-    return empty($this->schemas) ? $this->schemas : $this->schemas;
+    //return empty($this->schemas) ? $this->schemas : $this->schemas;
+    return $this->schemas;
   }
   
   public function dropSchema($schemaName) {
@@ -220,12 +258,15 @@ class Manager
   ## End of the iFather methods
   
   protected function removeSchema(Schema $schema) {
-    if (array_key_exists($schema->getName(), $this->schemas)) {
+    $this->ignoreDeleted();
+    if ($this->hasSchema($schema->getName())) {
+      $this->regardDeleted();
+    //if (array_key_exists($schema->getName(), $this->schemas)) {
       unset($this->schemas[$schema->getName()]);
       return TRUE;
     }
     
-    throw new \PHPSchemaManager\Exceptions\SchemaException("Schema '$schema' couldn't be dropped from the current connection}");
+    throw new \PHPSchemaManager\Exceptions\SchemaException("Schema '$schema' couldn't be dropped from the current connection");
   }
   
   /**
@@ -243,16 +284,15 @@ class Manager
   }
 
   public function getIgnoredSchemas() {
-    return $this->ignoredSchemas;
+    return empty($this->ignoredSchemas) ? FALSE: $this->ignoredSchemas;
   }
   
   public function setExclusiveSchema($schemaName) {
     $this->exclusiveSchema = $schemaName;
-    $this->getConnection()->driver->setExclusiveSchema($this->getExclusiveSchema());
   }
 
   public function getExclusiveSchema() {
-    return $this->exclusiveSchema;
+    return empty($this->exclusiveSchema) ? FALSE : $this->exclusiveSchema;
   }
 
   public function printTxt() {
@@ -299,13 +339,24 @@ class Manager
    */
   protected function fetchFromDatabase() {
     
+    if (!$this->isFetchAllowed()) {
+      return FALSE;
+    }
+    
     if ($this->goToDatabase) {
       $conn = $this->getConnection();
       
       //gets all schemas found in this connection
       foreach ($conn->driver->getSchemas() as $schema) {
+        /* @var $schema \PHPSchemaManager\Objects\Schema */
+        $this->forbidFetch();
         $this->addSchema($schema);
+        $this->allowFetch();
         $schema->setFather($this);
+        
+        if (!$schema->shouldBeIgnored()) {
+          $conn->driver->getTables($schema);
+        }
       }
       
       $this->goToDatabase = FALSE;
@@ -416,6 +467,18 @@ class Manager
       $table->addIndex($index);
     }
 
+  }
+  
+  protected function forbidFetch() {
+    $this->fetchAllowed = FALSE;
+  }
+  
+  protected function allowFetch() {
+    $this->fetchAllowed = TRUE;
+  }
+  
+  protected function isFetchAllowed() {
+    return $this->fetchAllowed;
   }
   
 }

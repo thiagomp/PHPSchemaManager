@@ -72,7 +72,6 @@ class Schema
       // Check if the table should be replaced in case the library receives a
       // table that already exists in the schema
       if ($replaceTable) {
-        //$this->alterTable($table);
         $oldTable->markForDeletion();
         $this->requestFlush();
       }

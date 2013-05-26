@@ -155,6 +155,8 @@ class ManagerTest
   public function testExclusiveSchema() {
     $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
     
+    $m->setExclusiveSchema('schemaTestA');
+    
     $schemasTest = array('schemaTestA', 'schemaTestB', 'schemaTestC');
     
     foreach($schemasTest as $schemaName) {
@@ -163,24 +165,20 @@ class ManagerTest
     }
     $m->flush();
     
-    $m->setExclusiveSchema('schemaTestA');
-    
     $this->assertTrue($m->hasSchema('schemaTestB')->shouldBeIgnored(), "The schema 'schemaTestB' should be ignored");
     $this->assertTrue($m->hasSchema('schemaTestC')->shouldBeIgnored(), "The schema 'schemaTestC' should be ignored");
     $this->assertFalse($m->hasSchema('schemaTestA')->shouldBeIgnored(), "The schema 'schemaTestA' should not be ignored");
+
+    $m->hasSchema('schemaTestA')->drop();
     
-    // remove the ignore instruction, so these schemas can be dopped
-    $m->hasSchema('schemaTestB')->regard();
-    $m->hasSchema('schemaTestC')->regard();
-    
-    foreach($schemasTest as $schemaName) {
-      $m->dropSchema($schemaName);
-    }
     $m->flush();
   }
   
   public function testExclusiveAndIgnoredSchema() {
     $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    
+    $m->setIgnoredSchemas(array('schemaTestB', 'schemaTestC', 'schemaTestD'));
+    $m->setExclusiveSchema('schemaTestE');
     
     $schemasTest = array('schemaTestA', 'schemaTestB', 'schemaTestC', 'schemaTestD', 'schemaTestE');
     
@@ -190,22 +188,14 @@ class ManagerTest
     }
     $m->flush();
     
-    $m->setIgnoredSchemas(array('schemaTestB', 'schemaTestC', 'schemaTestD'));
-    $m->setExclusiveSchema('schemaTestE');
-    
     $this->assertTrue($m->hasSchema('schemaTestA')->shouldBeIgnored(), "The schema 'schemaTestB' should be ignored");
     $this->assertTrue($m->hasSchema('schemaTestB')->shouldBeIgnored(), "The schema 'schemaTestC' should be ignored");
     $this->assertTrue($m->hasSchema('schemaTestC')->shouldBeIgnored(), "The schema 'schemaTestB' should be ignored");
     $this->assertTrue($m->hasSchema('schemaTestD')->shouldBeIgnored(), "The schema 'schemaTestC' should be ignored");
     $this->assertFalse($m->hasSchema('schemaTestE')->shouldBeIgnored(), "The schema 'schemaTestA' should not be ignored");
     
-    foreach($schemasTest as $schemaName) {
-      $m->hasSchema($schemaName)->regard();
-    }
+    $m->hasSchema('schemaTestE')->drop();
     
-    foreach($schemasTest as $schemaName) {
-      $m->dropSchema($schemaName);
-    }
     $m->flush();
   }
   
@@ -675,6 +665,7 @@ class ManagerTest
     // Now check if the tables where correctly create, by using a new instance
     // to the database
     $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+    $m->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
     
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testLibrary')->hasTable('review'), "Table 'review' wasn't found in the schema 'testLibrary'");
     $this->assertInstanceOf("\PHPSchemaManager\Objects\Table", $m->hasSchema('testInstitution')->hasTable('resource'), "Table 'resource' wasn't found in the schema 'testInstitution'");

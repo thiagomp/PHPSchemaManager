@@ -61,8 +61,6 @@ class DriverMysql
   
   public function getSchemas() {
     $schemas = array();
-    $ignoredSchemas = $this->getIgnoredSchemas();
-    $exclusiveSchema = $this->getExclusiveSchema();
     
     // check how this environment should operate
     $lowerCaseTableNames = $this->checkLowerCaseTableNames();
@@ -74,19 +72,6 @@ class DriverMysql
       
       // configure the schema to operate according to how this environment should work
       $lowerCaseTableNames ? $schema->turnCaseSensitiveNamesOn() : $schema->turnCaseSensitiveNamesOff();
-      
-      // check if the schema should be ignored
-      if (in_array($schema->getName(), $ignoredSchemas) ||
-            (!empty($exclusiveSchema) &&  
-              (($lowerCaseTableNames && $exclusiveSchema != $schema->getName()) || (!$lowerCaseTableNames && strtolower($exclusiveSchema) != strtolower($schema->getName())))
-            )
-          ) {
-        // ignores this schema
-        $schema->ignore();
-      }
-      else {
-        $this->getTables($schema);
-      }
       
       $schema->persisted();
       
@@ -153,10 +138,6 @@ class DriverMysql
     $sql = "SELECT COUNT(*) AS num_rows FROM $table";
     $res = $this->dbFetchArray($this->dbQuery($sql));
     return (int)$res['num_rows'];
-  }
-  
-  public function setExclusiveSchema($schemaName) {
-    $this->exclusiveSchema = $schemaName;
   }
   
   public function getExclusiveSchema() {
@@ -255,6 +236,22 @@ class DriverMysql
     }
     
     return "Not found";
+  }
+  
+  public function checkLowerCaseTableNames() {
+    //http://dev.mysql.com/doc/refman/5.0/en/identifier-case-sensitivity.html
+    $sql = "SHOW VARIABLES LIKE 'lower_case_table_names'";
+    
+    $res = $this->dbQuery($sql);
+    $row = mysql_fetch_assoc($res);
+    
+    //if 1 or 2, turnCaseSensitiveNamesOff otherwise, turnCaseSensitiveNamesOn
+    if (0 === $row['Variable_name']) {
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
   }
   
   // Methods specific for MySQL
@@ -525,23 +522,6 @@ class DriverMysql
     $this->dbQuery($sql);
     $schema->markAsDeleted();
     $schema->destroy();
-  }
-
-
-  protected function checkLowerCaseTableNames() {
-    //http://dev.mysql.com/doc/refman/5.0/en/identifier-case-sensitivity.html
-    $sql = "SHOW VARIABLES LIKE 'lower_case_table_names'";
-    
-    $res = $this->dbQuery($sql);
-    $row = mysql_fetch_assoc($res);
-    
-    //if 1 or 2, turnCaseSensitiveNamesOff otherwise, turnCaseSensitiveNamesOn
-    if (0 === $row['Variable_name']) {
-      return TRUE;
-    }
-    else {
-      return FALSE;
-    }
   }
   
 }

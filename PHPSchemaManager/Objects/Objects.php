@@ -32,7 +32,9 @@ class Objects {
   protected $action = self::ACTIONCREATE;
   protected $listeners;
   protected $caseSentiveNames = FALSE;
-  
+  protected $ignoreDeleted = FALSE;
+
+
   /* @var $father \PHPSchemaManager\Objects\Objects */
   protected $father = NULL;
   
@@ -120,24 +122,6 @@ class Objects {
     
     $this->getFather()->informDeletion($this);
   }
-
-
-  /**
-   * Inform what should be done with this table when flush() is called
-   * 
-   * @param string $action
-   * @throws \PHPSchemaManager\Exceptions\TableException
-   */
-  protected function setAction($action) {
-    $expectedActions = array(self::ACTIONALTER, self::ACTIONCREATE, self::ACTIONDELETE, self::STATUSSYNCED, self::STATUSDELETED);
-    
-    if (!FALSE !== array_search($action, $expectedActions)) {
-      $this->action = $action;
-    }
-    else {
-      throw new \PHPSchemaManager\Exceptions\ObjectsException("Action $action is not recognized.");
-    }
-  }
   
   public function getAction() {
     return $this->action;
@@ -171,6 +155,31 @@ class Objects {
     return $this->objectName;
   }
   
+  public function nameCompare($name) {
+    if ($this->isCaseSensitiveNamesOn()) {
+      return $this->getName() == $name;
+    }
+    
+    return strtolower($this->getName()) == strtolower($name);
+  }
+  
+  /**
+   * Inform what should be done with this table when flush() is called
+   * 
+   * @param string $action
+   * @throws \PHPSchemaManager\Exceptions\TableException
+   */
+  protected function setAction($action) {
+    $expectedActions = array(self::ACTIONALTER, self::ACTIONCREATE, self::ACTIONDELETE, self::STATUSSYNCED, self::STATUSDELETED);
+    
+    if (!FALSE !== array_search($action, $expectedActions)) {
+      $this->action = $action;
+    }
+    else {
+      throw new \PHPSchemaManager\Exceptions\ObjectsException("Action $action is not recognized.");
+    }
+  }
+  
   protected function setName($name) {
     $this->objectName = (string)$name;
   }
@@ -191,5 +200,17 @@ class Objects {
       $className = substr($className, $lastNsPos + 1);
     }
     return $className;
+  }
+  
+  protected function ignoreDeleted() {
+    $this->ignoreDeleted = TRUE;
+  }
+  
+  protected function regardDeleted() {
+    $this->ignoreDeleted = FALSE;
+  }
+  
+  protected function shouldIgnoreDeleted() {
+    return $this->ignoreDeleted;
   }
 }

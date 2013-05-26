@@ -13,7 +13,6 @@ interface iDriver {
   function getVersion();
   
   function setIgnoredSchemas(Array $schemaNames);
-  function setExclusiveSchema($schemaName);
   
   /**
    * Retrieves how many rows there is in a table
@@ -24,4 +23,12 @@ interface iDriver {
 
   
   function flush(\PHPSchemaManager\Objects\Schema $schema);
+  
+  /**
+   * Checks if the database works with name in lower case only or if it's 
+   * case sensitive
+   * 
+   * @return Boolean TRUE if working in lower case mode, FALSE if is case sensitive
+   */
+  function checkLowerCaseTableNames();
 }
