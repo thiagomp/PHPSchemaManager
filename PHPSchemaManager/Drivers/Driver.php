@@ -14,7 +14,7 @@ class Driver
         {
             case self::MYSQL:
                 return new DriverMysql($conn);
-        
+
             default:
                 throw new \Exception($conn->dbms . ' is not supported');
         }
