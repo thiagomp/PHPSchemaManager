@@ -1,22 +1,22 @@
 <?php
 namespace PHPSchemaManager\Drivers;
 
-class Driver {
-  protected static $dbbo;
+class Driver
+{
+    protected static $dbbo;
   
-  const MYSQL = 'mysql';
-
-  function Driver() {
-  }
+    const MYSQL = 'mysql';
   
-  public static function getDbms(\PHPSchemaManager\Connection $conn) {
+    public static function getDbms(\PHPSchemaManager\Connection $conn)
+    {
     
-    switch ($conn->dbms) {
-      case self::MYSQL:
-        return new DriverMysql($conn);
+        switch ($conn->dbms)
+        {
+            case self::MYSQL:
+                return new DriverMysql($conn);
         
-      default:
-        throw new \Exception($conn->dbms . ' is not supported');
+            default:
+                throw new \Exception($conn->dbms . ' is not supported');
+        }
     }
-  }
 }
