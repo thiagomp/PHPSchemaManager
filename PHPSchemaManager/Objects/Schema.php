@@ -11,7 +11,7 @@ class Schema
 
   /**
    *
-   * @var \PHPSchemaManager\Drivers\DriverInterface 
+   * @var \PHPSchemaManager\Drivers\Driver 
    */
   protected $dbms;
   
