@@ -116,21 +116,22 @@ class DriverMysqlColumn
             case \PHPSchemaManager\Objects\Column::BLOB:
                 return self::BLOB;
             case \PHPSchemaManager\Objects\Column::INT:
-            // The same rule applies for INT and SERIAL
             case \PHPSchemaManager\Objects\Column::SERIAL:
+                // The same rule applies for INT and SERIAL
                 if (3 > $this->column->getSize()) {
                     return self::TINYINT;
                 } elseif (6 > $this->column->getSize()) {
                     return self::SMALLINT;
                 } elseif (9 > $this->column->getSize()) {
                     return self::INT;
-                } elseif (19 > $this->column->getSize()){
+                } elseif (19 > $this->column->getSize()) {
                     return self::BIGINT;
                 } else {
                     // more info: http://dev.mysql.com/doc/refman/5.0/en/numer-ic-types.html
                     $msg = "Mysql doesn't accepts number bigger than 18 digitis";
                     throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
                 }
+                break;
             case \PHPSchemaManager\Objects\Column::FLOAT:
                 $size = $this->column->getSize();
                 $precision = $decimal = 0;
@@ -150,6 +151,7 @@ class DriverMysqlColumn
                     $msg = "Mysql doesn't accepts precision bigger than 53";
                     throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
                 }
+                break;
             case \PHPSchemaManager\Objects\Column::DECIMAL:
                 $size = $this->column->getSize();
                 $precision = $decimal = 0;
@@ -167,6 +169,7 @@ class DriverMysqlColumn
                     $msg = "Mysql doesn't accepts precision bigger than 65 for DECIMAL";
                     throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
                 }
+                break;
             case \PHPSchemaManager\Objects\Column::DATETIME:
                 return self::DATETIME;
             case \PHPSchemaManager\Objects\Column::TIMESTAMP:

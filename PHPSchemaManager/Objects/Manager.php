@@ -42,14 +42,12 @@ class Manager
   /**
    * Return the database connection. Once connected, the same connection will
    * be always used
-   * 
-   * @return \PHPSchemaManager\Drivers\DriverInterface
    */
   public function connect() {
     $conn = $this->getConnection();
     
     // get the database driver that will be used
-    $conn->driver = \PHPSchemaManager\Drivers\DriverInterface::getDbms($conn);
+    $conn->driver = \PHPSchemaManager\Drivers\Driver::getDbms($conn);
 
     // stabilishes a connection
     $conn->driver->connect();
