@@ -43,7 +43,7 @@ class Manager
    * Return the database connection. Once connected, the same connection will
    * be always used
    * 
-   * @return \PHPSchemaManager\Drivers\iDriver
+   * @return \PHPSchemaManager\Drivers\Driver
    */
   public function connect() {
     $conn = $this->getConnection();

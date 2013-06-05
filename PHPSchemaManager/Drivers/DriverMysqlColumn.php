@@ -45,7 +45,7 @@ class DriverMysqlColumn
 
     protected $column;
 
-    function __construct(\PHPSchemaManager\Objects\Column $column)
+    public function __construct(\PHPSchemaManager\Objects\Column $column)
     {
         $this->column = $column;
     }
@@ -54,7 +54,6 @@ class DriverMysqlColumn
     public function getDataDefinition()
     {
         $extraDefinition = "";
-        $comment = "'Created by PHPSchemaManager'";
 
         $columnType = $this->getMysqlColumnTypeString();
         $columnSize = $this->column->getSize();
@@ -71,7 +70,7 @@ class DriverMysqlColumn
             $nullInfo        = " NOT NULL";
         }
 
-        $sql = "$this->column $columnType{$columnSize}{$unsigned}{$nullInfo}{$defaultValue}{$extraDefinition} COMMENT {$comment}";
+        $sql = "$this->column $columnType{$columnSize}{$unsigned}{$nullInfo}{$defaultValue}{$extraDefinition}";
 
         return $sql;
     }
@@ -88,7 +87,8 @@ class DriverMysqlColumn
         if (\PHPSchemaManager\Objects\Column::FLOAT == $this->column->getType()) {
             $sizeParts = $this->column->getsizeParts();
             if (53 < $sizeParts[0]) {
-                throw new \PHPSchemaManager\Exceptions\ColumnMysqlException("Mysql doesn't supports a size bigger than 53 for FLOAT type");
+                $msg = "Mysql doesn't supports a size bigger than 53 for FLOAT type";
+                throw new \PHPSchemaManager\Exceptions\ColumnMysqlException($msg);
             }
         }
     }
@@ -100,31 +100,22 @@ class DriverMysqlColumn
 
             case \PHPSchemaManager\Objects\Column::VARCHAR:
                 return self::VARCHAR;
-
             case \PHPSchemaManager\Objects\Column::CHAR:
                 return self::CHAR;
-
             case \PHPSchemaManager\Objects\Column::TINYTEXT:
                 return self::TINYINT;
-
             case \PHPSchemaManager\Objects\Column::MEDIUMTEXT:
                 return self::MEDIUMTEXT;
-
             case \PHPSchemaManager\Objects\Column::LONGTEXT:
                 return self::LONGTEXT;        
-
             case \PHPSchemaManager\Objects\Column::TEXT:
                 return self::TEXT;
-
             case \PHPSchemaManager\Objects\Column::LONGBLOB:
                 return self::LONGBLOB;
-
             case \PHPSchemaManager\Objects\Column::MEDIUMBLOB:
                 return self::MEDIUMBLOB;
-
             case \PHPSchemaManager\Objects\Column::BLOB:
                 return self::BLOB;
-
             case \PHPSchemaManager\Objects\Column::INT:
             case \PHPSchemaManager\Objects\Column::SERIAL:
                 if (3 > $this->column->getSize()) {
@@ -136,10 +127,10 @@ class DriverMysqlColumn
                 } elseif (19 > $this->column->getSize()){
                     return self::BIGINT;
                 } else {
-                    // more info: http://dev.mysql.com/doc/refman/5.0/en/numeric-types.html
-                    throw new \PHPSchemaManager\Exceptions\MysqlException("Mysql doesn't accepts number bigger than 18 digitis");
+                    // more info: http://dev.mysql.com/doc/refman/5.0/en/numer-ic-types.html
+                    $msg = "Mysql doesn't accepts number bigger than 18 digitis";
+                    throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
                 }
-
             case \PHPSchemaManager\Objects\Column::FLOAT:
                 $size = $this->column->getSize();
                 $precision = $decimal = 0;
@@ -156,9 +147,9 @@ class DriverMysqlColumn
                     return self::DOUBLE;
                 } else {
                     // more info: http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
-                    throw new \PHPSchemaManager\Exceptions\MysqlException("Mysql doesn't accepts precision bigger than 53");
+                    $msg = "Mysql doesn't accepts precision bigger than 53";
+                    throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
                 }
-
             case \PHPSchemaManager\Objects\Column::DECIMAL:
                 $size = $this->column->getSize();
                 $precision = $decimal = 0;
@@ -173,12 +164,11 @@ class DriverMysqlColumn
                     return self::DECIMAL;
                 } else {
                     // more info: http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
-                    throw new \PHPSchemaManager\Exceptions\MysqlException("Mysql doesn't accepts precision bigger than 65 for DECIMAL");
+                    $msg = "Mysql doesn't accepts precision bigger than 65 for DECIMAL";
+                    throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
                 }        
-
             case \PHPSchemaManager\Objects\Column::DATETIME:
                 return self::DATETIME;
-
             case \PHPSchemaManager\Objects\Column::TIMESTAMP:
                 return self::TIMESTAMP;
         }
@@ -198,31 +188,22 @@ class DriverMysqlColumn
             case self::SET:
             case self::ENUM:
                 return \PHPSchemaManager\Objects\Column::VARCHAR;
-
             case self::CHAR:
                 return \PHPSchemaManager\Objects\Column::CHAR;
-
             case self::TINYTEXT:
                 return \PHPSchemaManager\Objects\Column::TINYTEXT;
-
             case self::MEDIUMTEXT:
                 return \PHPSchemaManager\Objects\Column::MEDIUMTEXT;
-
             case self::LONGTEXT:
                 return \PHPSchemaManager\Objects\Column::LONGTEXT;
-
             case self::TEXT:
                 return \PHPSchemaManager\Objects\Column::TEXT;
-
             case self::LONGBLOB:
                 return \PHPSchemaManager\Objects\Column::LONGBLOB;
-
             case self::MEDIUMBLOB:
                 return \PHPSchemaManager\Objects\Column::MEDIUMBLOB;
-
             case self::BLOB:
                 return \PHPSchemaManager\Objects\Column::BLOB;
-
             case self::INT:
             case self::INTEGER:
             case self::TINYINT:
@@ -230,28 +211,22 @@ class DriverMysqlColumn
             case self::BIGINT:
             case self::SMALLINT:
                 return \PHPSchemaManager\Objects\Column::INT;
-
             // although MySQL doesn't have this type, the idea is that the mysql class
             // inform this type in case of a auto_increment field is found
             case self::SERIAL:
                 return \PHPSchemaManager\Objects\Column::SERIAL;
-
             case self::FLOAT:
             case self::DOUBLE:
                 return \PHPSchemaManager\Objects\Column::FLOAT;
-
             case self::DECIMAL:
             case self::NUMERIC:
                 return \PHPSchemaManager\Objects\Column::DECIMAL;
-
             case self::DATE:
             case self::DATETIME:
                 return \PHPSchemaManager\Objects\Column::DATETIME;
-
             case self::TIMESTAMP:
             case self::TIME:
                 return \PHPSchemaManager\Objects\Column::TIMESTAMP;
-
             default:
                 $msg = "The type $type on the column '$this->column' is not recognized";
                 throw new \PHPSchemaManager\Exceptions\ColumnException($msg);

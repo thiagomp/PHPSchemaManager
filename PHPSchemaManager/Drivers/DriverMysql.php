@@ -1,7 +1,7 @@
 <?php
 namespace PHPSchemaManager\Drivers;
 
-class DriverMysql implements iDriver
+class DriverMysql implements Driver
 {
   
     protected $sm;
@@ -29,8 +29,13 @@ class DriverMysql implements iDriver
                 $port = "3306";
             }
       
-            if (!$linkIdentifier = mysql_connect("{$this->conn->hostname}:{$port}", $this->conn->username, $this->conn->password)) {
-                throw new \SchemaManager\Exceptions\MysqlException("Failed to connect on {$this->conn->dbms} at {$this->conn->hostname} with {$this->conn->username} user");
+            $host = "{$this->conn->hostname}:{$port}";
+            $username = $this->conn->username;
+            $password = $this->conn->password;
+            $linkIdentifier = mysql_connect($host, $username, $password);
+            if (!$linkIdentifier) {
+                $msg = "Failed to connect on {$this->conn->dbms} at {$host} with {$username} user";
+                throw new \SchemaManager\Exceptions\MysqlException($msg);
             }
 
             $this->linkIdentifier = $linkIdentifier;
@@ -38,7 +43,7 @@ class DriverMysql implements iDriver
 
         return $this->linkIdentifier;
     }
-  
+
     public function selectDb($dbName = null)
     {
     
@@ -47,7 +52,7 @@ class DriverMysql implements iDriver
         }
 
         if ($this->databaseSelected != $dbName) {
-            if(!mysql_select_db($dbName)) {
+            if (!mysql_select_db($dbName)) {
                 $msg = "Database '$dbName' wasn't found, you have to create it first";
                 throw new \SchemaManager\Exceptions\MysqlException($msg);
             }
@@ -72,7 +77,7 @@ class DriverMysql implements iDriver
 
         // get the list of databases found in this connection
         $res = mysql_list_dbs();
-        while($row = mysql_fetch_array($res)) {
+        while ($row = mysql_fetch_array($res)) {
             $schema = new \PHPSchemaManager\Objects\Schema($row['Database']);
 
             // configure the schema to operate according to how this environment should work
@@ -86,12 +91,12 @@ class DriverMysql implements iDriver
         return $schemas;
     }
 
-    public function getTables(\PHPSchemaManager\Objects\Schema $schema) {
+    public function getTables(\PHPSchemaManager\Objects\Schema $schema)
+    {
 
-        try
-        {
+        try {
             $this->selectDb($schema->getName());
-        } catch(\PHPSchemaManager\Exceptions\MysqlException $e) {
+        } catch (\PHPSchemaManager\Exceptions\MysqlException $e) {
             // most probably, it because the schema wasn't created yet
             // in this case, an empty set of tables will be replied
             return array();
@@ -100,7 +105,7 @@ class DriverMysql implements iDriver
         // get the tables from the database
         $sql = "SHOW TABLES";
         $res = $this->dbQuery($sql);
-        while($row = mysql_fetch_row($res)) {
+        while ($row = mysql_fetch_row($res)) {
             $table = new \PHPSchemaManager\Objects\Table($row[0]);
 
             // get the columns and put them into the table object directly
@@ -159,28 +164,25 @@ class DriverMysql implements iDriver
         }
 
         // flush schema
-        switch($schema->getAction()) {
+        switch ($schema->getAction()) {
             case \PHPSchemaManager\Objects\Schema::ACTIONCREATE:
                 $this->createDatabase($schema->getName());
                 break;
-
             case \PHPSchemaManager\Objects\Schema::ACTIONALTER:
                 //TODO implement changes requested for the schema
                 break;
-
             case \PHPSchemaManager\Objects\Schema::ACTIONDELETE:
                 $this->dropDatabase($schema);
 
                 // Since the schema was dropped, we don't need to do anything below
                 // with the tables
                 return true;
-
             case \PHPSchemaManager\Objects\Schema::STATUSSYNCED:
                 // nothing to do
                 break;
-
             default:
-                throw new \PHPSchemaManager\Exceptions\MysqlException("Action {$table->getAction()} is not implemented by this library");
+                $msg = "Action {$table->getAction()} is not implemented by this library";
+                throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
 
         // schema is now ready to be used
@@ -190,14 +192,13 @@ class DriverMysql implements iDriver
         $this->selectDb($schema->getName());
 
         // flush tables
-        foreach($schema->getTables() as $table) {
+        foreach ($schema->getTables() as $table) {
             /* @var $table \SchemaManager\Objects\Table */
-            switch($table->getAction()) {
+            switch ($table->getAction()) {
                 case \PHPSchemaManager\Objects\Table::ACTIONALTER:
                     $this->alterTable($table);
                     $table->persisted();
                     break;
-
                 case \PHPSchemaManager\Objects\Table::ACTIONCREATE:
                     $this->createTable($table);
 
@@ -205,17 +206,15 @@ class DriverMysql implements iDriver
                     $this->getIndexes($table);
                     $table->persisted();
                     break;
-
                 case \PHPSchemaManager\Objects\Table::ACTIONDELETE:
                     $this->deleteTable($table);
                     break;
-
                 case \PHPSchemaManager\Objects\Table::STATUSSYNCED:
                     // nothing to do
                     break;
-
                 default:
-                    throw new \PHPSchemaManager\Exceptions\MysqlException("Action {$table->getAction()} is not implemented by this library");
+                    $msg = "Action {$table->getAction()} is not implemented by this library";
+                    throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
             }
 
         }
@@ -262,7 +261,7 @@ class DriverMysql implements iDriver
         $sql = "DESC $table";
         $resCol = $this->dbQuery($sql);
 
-        while($row = mysql_fetch_assoc($resCol)) {
+        while ($row = mysql_fetch_assoc($resCol)) {
             // create a new column object
             $column = new \PHPSchemaManager\Objects\Column($row['Field']);
 
@@ -270,10 +269,12 @@ class DriverMysql implements iDriver
 
             // to get the type we have to first separate the type name from its size, if any.
             $matches = '';
-            preg_match("/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)/", strtolower($row['Type']), $matches);
+            $regex = "/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)/";
+            preg_match($regex, strtolower($row['Type']), $matches);
 
             if (empty($matches[0])) {
-                throw new \PHPSchemaManager\Exceptions\MysqlException("Malformed column type {$row['Type']}. Most probably, a not implemented case");
+                $msg = "Malformed column type {$row['Type']}. Most probably, a not implemented case";
+                throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
             }
 
             // if the type is auto_increment let's use the generic type SERIAL
@@ -291,7 +292,7 @@ class DriverMysql implements iDriver
                 if ('enum' == strtolower($matches[1]) || 'set' == strtolower($matches[1])) {
                     $size = str_replace("'", "", $size);
                     $max = 0;
-                    foreach(explode(",", $size) as $word) {
+                    foreach (explode(",", $size) as $word) {
                         if (mb_strlen($word) > $max) {
                             $max = mb_strlen($word);
                         }
@@ -311,7 +312,7 @@ class DriverMysql implements iDriver
             if ('yes' == strtolower($row['Null'])) {
                 $column->allowsNull();
             } else {
-              $column->forbidsNull();
+                $column->forbidsNull();
             }
 
             // set the default value of the column
@@ -330,8 +331,9 @@ class DriverMysql implements iDriver
 
             // get the index info from the information_schema database
             $this->selectDb('information_schema');
-        } catch(\Exception $e) {
-            $msg = "While trying to get the indexes for table '$table', the information_schema database wasn't found. Most probably because your MySQL is older than version 5.1";
+        } catch (\Exception $e) {
+            $msg = "While trying to get the indexes for table '$table', the information_schema database wasn't found." .
+                    " Most probably because your MySQL is older than version 5.1";
             throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
 
@@ -350,19 +352,19 @@ class DriverMysql implements iDriver
 
         foreach($indexes as $indexName => $values) {
             $index = new \PHPSchemaManager\Objects\Index($indexName);
-            foreach($values as $idx) {
-              if (!$column = $table->hasColumn($idx['COLUMN_NAME'])) {
-                throw new \PHPSchemaManager\Exceptions\MysqlException("Trying to create an index with a non-existent column ({$idx['COLUMN_NAME']})");
-              }
-              $index->addColumn($column, $idx['SEQ_IN_INDEX']);
+            foreach ($values as $idx) {
+                if (!$column = $table->hasColumn($idx['COLUMN_NAME'])) {
+                    $msg = "Trying to create an index with a non-existent column ({$idx['COLUMN_NAME']})";
+                    throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
+                }
+                $index->addColumn($column, $idx['SEQ_IN_INDEX']);
 
-              $index->setType(\PHPSchemaManager\Objects\Index::REGULAR);
-              if ("PRIMARY" == $idx['INDEX_NAME']) {
-                $index->setType(\PHPSchemaManager\Objects\Index::PRIMARYKEY);
-              }
-              elseif ("0" == $idx['NON_UNIQUE']) {
-                $index->setType(\PHPSchemaManager\Objects\Index::UNIQUE);
-              }
+                $index->setType(\PHPSchemaManager\Objects\Index::REGULAR);
+                if ("PRIMARY" == $idx['INDEX_NAME']) {
+                    $index->setType(\PHPSchemaManager\Objects\Index::PRIMARYKEY);
+                } elseif ("0" == $idx['NON_UNIQUE']) {
+                    $index->setType(\PHPSchemaManager\Objects\Index::UNIQUE);
+                }
 
             }
 
@@ -391,9 +393,8 @@ class DriverMysql implements iDriver
     {
         $i = 0;
         $instruction = array();
-        $sql = "";
 
-        foreach($table->getColumns() as $column) {
+        foreach ($table->getColumns() as $column) {
 
             if ($column->isSynced()) {
                 continue;
@@ -403,7 +404,7 @@ class DriverMysql implements iDriver
 
                 if ($column->shouldCreate()) {
                     $instruction[$i] = "ADD COLUMN ";
-                } elseif($column->shouldAlter()) {
+                } elseif ($column->shouldAlter()) {
                     $instruction[$i] = "MODIFY COLUMN ";
                 }
 
@@ -435,7 +436,7 @@ class DriverMysql implements iDriver
             }
 
             // if it is SYNCED, do nothing
-            if ($index->isSynced()) {
+            if($index->isSynced()) {
                 continue;
             } elseif ($index->shouldDelete()) {
                 // check if the index should be deleted
@@ -445,7 +446,7 @@ class DriverMysql implements iDriver
             } elseif ($index->shouldCreate()) {
                 // check if the index should be created
                 $columns = array();
-                foreach($index->getColumns() as $column) {
+                foreach ($index->getColumns() as $column) {
                     $columns[] = "$column";
                 }
                 $columnsString = implode(", ", $columns);
@@ -485,7 +486,7 @@ class DriverMysql implements iDriver
         $this->selectDb();
         $sql = "CREATE TABLE $table (" . PHP_EOL;
 
-        foreach($table->getColumns() as $column) {
+        foreach ($table->getColumns() as $column) {
             $col = new DriverMysqlColumn($column);
             $sql .= $col->getDataDefinition() . "," . PHP_EOL;
         }
@@ -507,7 +508,7 @@ class DriverMysql implements iDriver
         $sql = "CREATE DATABASE $dbName";
         try {
             $this->dbQuery($sql);
-        }catch(\PHPSchemaManager\Exceptions\MysqlException $e) {
+        } catch (\PHPSchemaManager\Exceptions\MysqlException $e) {
             //do nothing, if the database is already created, no problem
         }
     }
