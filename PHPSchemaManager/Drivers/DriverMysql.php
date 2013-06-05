@@ -6,9 +6,9 @@ class DriverMysql implements iDriver
   
     protected $sm;
     protected $conn;
-    protected $databaseSelected = FALSE;
+    protected $databaseSelected = false;
     protected $linkIdentifier;
-    protected $exclusiveSchema = FALSE;
+    protected $exclusiveSchema = false;
     protected $ignoredSchemas = array();
 
 
@@ -21,18 +21,15 @@ class DriverMysql implements iDriver
     // Methods from the interface
     public function connect()
     {
-        if (empty($this->linkIdentifier))
-        {
+        if (empty($this->linkIdentifier)) {
 
             $port = $this->conn->port;
       
-            if (empty($port))
-            {
+            if (empty($port)) {
                 $port = "3306";
             }
       
-            if (!$linkIdentifier = mysql_connect("{$this->conn->hostname}:{$port}", $this->conn->username, $this->conn->password))
-            {
+            if (!$linkIdentifier = mysql_connect("{$this->conn->hostname}:{$port}", $this->conn->username, $this->conn->password)) {
                 throw new \SchemaManager\Exceptions\MysqlException("Failed to connect on {$this->conn->dbms} at {$this->conn->hostname} with {$this->conn->username} user");
             }
 
@@ -45,15 +42,12 @@ class DriverMysql implements iDriver
     public function selectDb($dbName = null)
     {
     
-        if (empty($dbName))
-        {
+        if (empty($dbName)) {
             $dbName = $this->getDatabaseSelected();
         }
 
-        if ($this->databaseSelected != $dbName)
-        {
-            if(!mysql_select_db($dbName))
-            {
+        if ($this->databaseSelected != $dbName) {
+            if(!mysql_select_db($dbName)) {
                 $msg = "Database '$dbName' wasn't found, you have to create it first";
                 throw new \SchemaManager\Exceptions\MysqlException($msg);
             }
@@ -69,7 +63,7 @@ class DriverMysql implements iDriver
         return $this->databaseSelected;
     }
 
-    public function getSchemas()
+    public function getSchemas() 
     {
         $schemas = array();
 
@@ -78,8 +72,7 @@ class DriverMysql implements iDriver
 
         // get the list of databases found in this connection
         $res = mysql_list_dbs();
-        while($row = mysql_fetch_array($res))
-        {
+        while($row = mysql_fetch_array($res)) {
             $schema = new \PHPSchemaManager\Objects\Schema($row['Database']);
 
             // configure the schema to operate according to how this environment should work
@@ -98,8 +91,7 @@ class DriverMysql implements iDriver
         try
         {
             $this->selectDb($schema->getName());
-        } catch(\PHPSchemaManager\Exceptions\MysqlException $e)
-        {
+        } catch(\PHPSchemaManager\Exceptions\MysqlException $e) {
             // most probably, it because the schema wasn't created yet
             // in this case, an empty set of tables will be replied
             return array();
@@ -108,8 +100,7 @@ class DriverMysql implements iDriver
         // get the tables from the database
         $sql = "SHOW TABLES";
         $res = $this->dbQuery($sql);
-        while($row = mysql_fetch_row($res))
-        {
+        while($row = mysql_fetch_row($res)) {
             $table = new \PHPSchemaManager\Objects\Table($row[0]);
 
             // get the columns and put them into the table object directly
@@ -129,8 +120,7 @@ class DriverMysql implements iDriver
 
         $result = mysql_query($sql);
 
-        if (!$result)
-        {
+        if (!$result) {
             $msg = 'MySQL Error: ' . mysql_error() . "\nQuery: $sql";
             throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
@@ -163,15 +153,13 @@ class DriverMysql implements iDriver
     public function flush(\PHPSchemaManager\Objects\Schema $schema)
     {
         // if the schema should be ignored, just mark it as synced and move on
-        if ($schema->shouldBeIgnored())
-        {
+        if ($schema->shouldBeIgnored()) {
             $schema->persisted();
-            return TRUE;
+            return true;
         }
 
         // flush schema
-        switch($schema->getAction())
-        {
+        switch($schema->getAction()) {
             case \PHPSchemaManager\Objects\Schema::ACTIONCREATE:
                 $this->createDatabase($schema->getName());
                 break;
@@ -185,7 +173,7 @@ class DriverMysql implements iDriver
 
                 // Since the schema was dropped, we don't need to do anything below
                 // with the tables
-                return TRUE;
+                return true;
 
             case \PHPSchemaManager\Objects\Schema::STATUSSYNCED:
                 // nothing to do
@@ -202,11 +190,9 @@ class DriverMysql implements iDriver
         $this->selectDb($schema->getName());
 
         // flush tables
-        foreach($schema->getTables() as $table)
-        {
+        foreach($schema->getTables() as $table) {
             /* @var $table \SchemaManager\Objects\Table */
-            switch($table->getAction())
-            {
+            switch($table->getAction()) {
                 case \PHPSchemaManager\Objects\Table::ACTIONALTER:
                     $this->alterTable($table);
                     $table->persisted();
@@ -235,7 +221,7 @@ class DriverMysql implements iDriver
         }
 
         // the schema and its tables are now persisted
-        return TRUE;
+        return true;
     }
   
     public function getVersion()
@@ -243,10 +229,8 @@ class DriverMysql implements iDriver
         $sql = "SHOW VARIABLES LIKE '%version%'";
         $res = $this->dbQuery($sql);
 
-        while ($row = mysql_fetch_assoc($res))
-        {
-            if ($row['Variable_name'] == 'version')
-            {
+        while ($row = mysql_fetch_assoc($res)) {
+            if ($row['Variable_name'] == 'version') {
               return $row['Value'];
             }
         }
@@ -263,11 +247,10 @@ class DriverMysql implements iDriver
         $row = mysql_fetch_assoc($res);
 
         //if 1 or 2, turnCaseSensitiveNamesOff otherwise, turnCaseSensitiveNamesOn
-        if (0 === $row['Variable_name'])
-        {
-          return TRUE;
+        if (0 === $row['Variable_name']) {
+          return true;
         } else {
-          return FALSE;
+          return false;
         }
     }
   
@@ -279,8 +262,7 @@ class DriverMysql implements iDriver
         $sql = "DESC $table";
         $resCol = $this->dbQuery($sql);
 
-        while($row = mysql_fetch_assoc($resCol))
-        {
+        while($row = mysql_fetch_assoc($resCol)) {
             // create a new column object
             $column = new \PHPSchemaManager\Objects\Column($row['Field']);
 
@@ -290,33 +272,27 @@ class DriverMysql implements iDriver
             $matches = '';
             preg_match("/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)/", strtolower($row['Type']), $matches);
 
-            if (empty($matches[0]))
-            {
+            if (empty($matches[0])) {
                 throw new \PHPSchemaManager\Exceptions\MysqlException("Malformed column type {$row['Type']}. Most probably, a not implemented case");
             }
 
             // if the type is auto_increment let's use the generic type SERIAL
-            if ('auto_increment' == strtolower($row['Extra']))
-            {
+            if ('auto_increment' == strtolower($row['Extra'])) {
                 $column->setType(\PHPSchemaManager\Objects\Column::SERIAL);
             } else {
                 $mysqlColumn->setType($matches[1]);
             }
 
             // set the size of the field, if any
-            if (!empty($matches[3]))
-            {
+            if (!empty($matches[3])) {
                 $size = $matches[3];
 
                 // if the type is ENUM or SET, get the biggest value on it
-                if ('enum' == strtolower($matches[1]) || 'set' == strtolower($matches[1]))
-                {
+                if ('enum' == strtolower($matches[1]) || 'set' == strtolower($matches[1])) {
                     $size = str_replace("'", "", $size);
                     $max = 0;
-                    foreach(explode(",", $size) as $word)
-                    {
-                        if (mb_strlen($word) > $max)
-                        {
+                    foreach(explode(",", $size) as $word) {
+                        if (mb_strlen($word) > $max) {
                             $max = mb_strlen($word);
                         }
                     }
@@ -327,14 +303,12 @@ class DriverMysql implements iDriver
             }
 
             // check if there is the unsigned instruction
-            if (!empty($matches[7]) && 'unsigned' == strtolower($matches[7]))
-            {
+            if (!empty($matches[7]) && 'unsigned' == strtolower($matches[7])) {
                 $column->unsigned();
             }
 
             // check if the column can receive null values, by default this library assumes it can't
-            if ('yes' == strtolower($row['Null']))
-            {
+            if ('yes' == strtolower($row['Null'])) {
                 $column->allowsNull();
             } else {
               $column->forbidsNull();
@@ -350,8 +324,7 @@ class DriverMysql implements iDriver
   
     public function getIndexes(\PHPSchemaManager\Objects\Table $table) {
         //TODO find another way to get the indexes from mysql tables, to support older versions of MySQL
-        try
-        {
+        try {
             // stores the current database, so its can be selected again at the end of this method
             $currentSelectedDb = $this->getDatabaseSelected();
 
@@ -371,8 +344,7 @@ class DriverMysql implements iDriver
         $res = $this->dbQuery($sql);
 
         $indexes = array();
-        while ($row = mysql_fetch_assoc($res))
-        {
+        while ($row = mysql_fetch_assoc($res)) {
             $indexes[$row['INDEX_NAME']][] = $row;
         }
 
