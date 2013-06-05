@@ -1,7 +1,8 @@
 <?php
 namespace PHPSchemaManager\Drivers;
 
-interface Driver {
+interface DriverInterface
+{
   
     public function connect();
     public function selectDb();

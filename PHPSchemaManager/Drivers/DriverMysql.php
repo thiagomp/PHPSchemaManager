@@ -1,7 +1,7 @@
 <?php
 namespace PHPSchemaManager\Drivers;
 
-class DriverMysql implements Driver
+class DriverMysql implements DriverInterface
 {
   
     protected $sm;
@@ -68,7 +68,7 @@ class DriverMysql implements Driver
         return $this->databaseSelected;
     }
 
-    public function getSchemas() 
+    public function getSchemas()
     {
         $schemas = array();
 
@@ -230,7 +230,7 @@ class DriverMysql implements Driver
 
         while ($row = mysql_fetch_assoc($res)) {
             if ($row['Variable_name'] == 'version') {
-              return $row['Value'];
+                return $row['Value'];
             }
         }
 
@@ -247,9 +247,9 @@ class DriverMysql implements Driver
 
         //if 1 or 2, turnCaseSensitiveNamesOff otherwise, turnCaseSensitiveNamesOn
         if (0 === $row['Variable_name']) {
-          return true;
+            return true;
         } else {
-          return false;
+            return false;
         }
     }
   
@@ -323,7 +323,8 @@ class DriverMysql implements Driver
         }
     }
   
-    public function getIndexes(\PHPSchemaManager\Objects\Table $table) {
+    public function getIndexes(\PHPSchemaManager\Objects\Table $table)
+    {
         //TODO find another way to get the indexes from mysql tables, to support older versions of MySQL
         try {
             // stores the current database, so its can be selected again at the end of this method
@@ -350,7 +351,7 @@ class DriverMysql implements Driver
             $indexes[$row['INDEX_NAME']][] = $row;
         }
 
-        foreach($indexes as $indexName => $values) {
+        foreach ($indexes as $indexName => $values) {
             $index = new \PHPSchemaManager\Objects\Index($indexName);
             foreach ($values as $idx) {
                 if (!$column = $table->hasColumn($idx['COLUMN_NAME'])) {
@@ -423,7 +424,7 @@ class DriverMysql implements Driver
         $i = 0;
         $instruction = array();
 
-        foreach($table->getIndexes() as $index) {
+        foreach ($table->getIndexes() as $index) {
             /* @var $index \PHPSchemaManager\Objects\Index */
 
             // Mysql doesn't support index modification. @see http://dev.mysql.com/doc/refman/5.0/en/alter-table.html
@@ -436,7 +437,7 @@ class DriverMysql implements Driver
             }
 
             // if it is SYNCED, do nothing
-            if($index->isSynced()) {
+            if ($index->isSynced()) {
                 continue;
             } elseif ($index->shouldDelete()) {
                 // check if the index should be deleted
@@ -504,7 +505,8 @@ class DriverMysql implements Driver
      * 
      * @param string $dbName
      */
-    protected function createDatabase($dbName) {
+    protected function createDatabase($dbName)
+    {
         $sql = "CREATE DATABASE $dbName";
         try {
             $this->dbQuery($sql);
@@ -513,11 +515,11 @@ class DriverMysql implements Driver
         }
     }
   
-    protected function dropDatabase(\PHPSchemaManager\Objects\Schema $schema) {
+    protected function dropDatabase(\PHPSchemaManager\Objects\Schema $schema)
+    {
         $sql = "DROP DATABASE $schema";
         $this->dbQuery($sql);
         $schema->markAsDeleted();
         $schema->destroy();
     }
-  
 }

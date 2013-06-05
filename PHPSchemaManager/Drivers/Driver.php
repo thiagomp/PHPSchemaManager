@@ -1,7 +1,7 @@
 <?php
 namespace PHPSchemaManager\Drivers;
 
-class Driver
+class DriverInterface
 {
     protected static $dbbo;
   

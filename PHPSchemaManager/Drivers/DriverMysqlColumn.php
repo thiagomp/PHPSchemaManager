@@ -97,7 +97,6 @@ class DriverMysqlColumn
     {
 
         switch ($this->column->getType()) {
-
             case \PHPSchemaManager\Objects\Column::VARCHAR:
                 return self::VARCHAR;
             case \PHPSchemaManager\Objects\Column::CHAR:
@@ -107,7 +106,7 @@ class DriverMysqlColumn
             case \PHPSchemaManager\Objects\Column::MEDIUMTEXT:
                 return self::MEDIUMTEXT;
             case \PHPSchemaManager\Objects\Column::LONGTEXT:
-                return self::LONGTEXT;        
+                return self::LONGTEXT;
             case \PHPSchemaManager\Objects\Column::TEXT:
                 return self::TEXT;
             case \PHPSchemaManager\Objects\Column::LONGBLOB:
@@ -117,12 +116,13 @@ class DriverMysqlColumn
             case \PHPSchemaManager\Objects\Column::BLOB:
                 return self::BLOB;
             case \PHPSchemaManager\Objects\Column::INT:
+            // The same rule applies for INT and SERIAL
             case \PHPSchemaManager\Objects\Column::SERIAL:
                 if (3 > $this->column->getSize()) {
                     return self::TINYINT;
-                } elseif(6 > $this->column->getSize()) {
+                } elseif (6 > $this->column->getSize()) {
                     return self::SMALLINT;
-                } elseif(9 > $this->column->getSize()) {
+                } elseif (9 > $this->column->getSize()) {
                     return self::INT;
                 } elseif (19 > $this->column->getSize()){
                     return self::BIGINT;
@@ -135,7 +135,7 @@ class DriverMysqlColumn
                 $size = $this->column->getSize();
                 $precision = $decimal = 0;
 
-                if(strpos($size, ",")) {
+                if (strpos($size, ",")) {
                     list($precision, $decimal) = explode(',', $size);
                 } else {
                     $precision = (int)$size;
@@ -143,7 +143,7 @@ class DriverMysqlColumn
 
                 if (24 > $precision) {
                     return self::FLOAT;
-                } elseif(54 > $precision) {
+                } elseif (54 > $precision) {
                     return self::DOUBLE;
                 } else {
                     // more info: http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
@@ -154,7 +154,7 @@ class DriverMysqlColumn
                 $size = $this->column->getSize();
                 $precision = $decimal = 0;
 
-                if(strpos($size, ",")) {
+                if (strpos($size, ",")) {
                     list($precision, $decimal) = explode(',', $size);
                 } else {
                     $precision = (int)$size;
@@ -166,7 +166,7 @@ class DriverMysqlColumn
                     // more info: http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
                     $msg = "Mysql doesn't accepts precision bigger than 65 for DECIMAL";
                     throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
-                }        
+                }
             case \PHPSchemaManager\Objects\Column::DATETIME:
                 return self::DATETIME;
             case \PHPSchemaManager\Objects\Column::TIMESTAMP:
@@ -243,7 +243,8 @@ class DriverMysqlColumn
         $this->column->setType($this->mapToLibraryType($type));
     }
 
-    protected function getNormalizedDefaultValue() {
+    protected function getNormalizedDefaultValue()
+    {
         $value = $this->column->getDefaultValue();
 
         if (\PHPSchemaManager\Objects\Column::NODEFAULTVALUE == $value) {
@@ -262,5 +263,4 @@ class DriverMysqlColumn
 
         return $value;
     }
-  
 }
