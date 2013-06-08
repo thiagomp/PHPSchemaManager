@@ -19,15 +19,17 @@ class Index extends Objects implements iObjectEvents
 
     /**
      *
-     * @var \PHPSchemaManager\Objects\Column Columns that compose this index. The order of the index is determined by the index of this array
+     * @var \PHPSchemaManager\Objects\Column Columns that compose this index. The order of the index is determined by
+     *   the index of this array
      */
     protected $columns;
 
     /**
      *
-     * @var \PHPSchemaManager\Objects\Column Column that is the PK . This is just an index of the column in the $columns variable
+     * @var \PHPSchemaManager\Objects\Column Column that is the PK . This is just an index of the column in the
+     *   $columns variable
      */
-    protected $primaryColumnIndex = FALSE;
+    protected $primaryColumnIndex = false;
 
 
     const REGULAR = 'regular';
@@ -51,7 +53,7 @@ class Index extends Objects implements iObjectEvents
     {
         $allowedTypes = array(self::REGULAR, self::UNIQUE, self::PRIMARYKEY);
 
-        if (FALSE === array_search($type, $allowedTypes)) {
+        if (false === array_search($type, $allowedTypes)) {
             throw new \SchemaManager\Exceptions\IndexException("Index type $type is not supported by this library");
         }
 
@@ -137,7 +139,7 @@ class Index extends Objects implements iObjectEvents
         $indexColumns = $this->getColumns();
 
         $strCols = array();
-        foreach($indexColumns as $indexCol) {
+        foreach ($indexColumns as $indexCol) {
             $strCols[] = $indexCol;
         }
 
@@ -154,7 +156,7 @@ class Index extends Objects implements iObjectEvents
         $json .= str_repeat(" ", $spaces) . "\"$this\": {" . PHP_EOL;
         $json .= str_repeat(" ", $spaces) . "  \"type\": \"{$this->getType()}\"," . PHP_EOL;
         $json .= str_repeat(" ", $spaces) . "  \"columns\": [";
-        foreach($this->getColumns() as $indexColumn) {
+        foreach ($this->getColumns() as $indexColumn) {
             $json .= "\"$indexColumn\", ";
         }
         $json = substr($json, 0, -2) . "]" . PHP_EOL;
