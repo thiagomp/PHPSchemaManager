@@ -205,7 +205,7 @@ class Column extends Objects implements iObjectEvents
         if (self::NULLVALUE != $value && self::CUSTOMVALUE != $value && self::NODEFAULTVALUE != $value) {
 
             $sizeTypes = array_merge($this->getNumericTypes(), $this->getStringTypes());
-            if (false !== array_search($this->getType(), $sizeTypes) ) {
+            if (false !== array_search($this->getType(), $sizeTypes)) {
                 if (mb_strlen($value) > $this->getSize()) {
                     $msg = "The informed default value [{$value}] for column '$this' is bigger " .
                         "[".(mb_strlen($value))."] than the size defined for this column allows [{$this->getSize()}]";

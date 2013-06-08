@@ -11,7 +11,7 @@ class ColumnTypeStrategySerial implements iColumnTypeStrategy
 
     protected $column;
 
-    function __construct(Column $column)
+    public function __construct(Column $column)
     {
         $this->column = $column;
     }
