@@ -2,4 +2,6 @@
 
 namespace PHPSchemaManager\Exceptions;
 
-class IndexException extends SchemaException { }
+class IndexException extends SchemaException {
+
+}

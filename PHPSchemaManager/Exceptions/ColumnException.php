@@ -2,4 +2,6 @@
 
 namespace PHPSchemaManager\Exceptions;
 
-class ColumnException extends SchemaException { }
+class ColumnException extends SchemaException {
+
+}
