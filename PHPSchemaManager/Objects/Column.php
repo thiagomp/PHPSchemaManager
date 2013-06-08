@@ -84,7 +84,7 @@ class Column extends Objects implements iObjectEvents
         }
 
         // check if the type is any of the supported types of this library
-        if (FALSE === array_search($type, $supportedTypes)) {
+        if (false === array_search($type, $supportedTypes)) {
             throw new \PHPSchemaManager\Exceptions\ColumnException("Type $type is not supported by this library");
         }
 
@@ -99,7 +99,8 @@ class Column extends Objects implements iObjectEvents
         $this->markForAlter();
     }
 
-    public function getType() {
+    public function getType()
+    {
         return $this->type;
     }
 
@@ -111,20 +112,19 @@ class Column extends Objects implements iObjectEvents
         if (self::FLOAT == $this->getType() ||  self::DECIMAL == $this->getType()) {
             $matches = array();
             if (!preg_match('/^(\d+)(,\d+)?$/', $size, $matches)) {
-                throw new \PHPSchemaManager\Exceptions\ColumnException("The informed size $size is not supported by columns of {$this->getType()} type");
+                $msg = "The informed size $size is not supported by columns of {$this->getType()} type";
+                throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
             }
 
             // in case only 7 was informed, the value will be normalized into 7,0
             if (!isset($matches[2])) {
                 $sizeParts = array((int)$size, 0);
                 $size = "$size,0";
-            }
-            else {
+            } else {
                 $sizeParts = array((int)$matches[1], (int)$matches[2]);
             }
 
-        }
-        else {
+        } else {
             // normalize the size variable to be integer
             $size = (int)$size;
         }
@@ -151,7 +151,7 @@ class Column extends Objects implements iObjectEvents
      */
     public function allowsNull()
     {
-        $this->null = TRUE;
+        $this->null = true;
         $this->setDefaultValue(self::NULLVALUE);
         $this->markForAlter();
     }
@@ -161,7 +161,7 @@ class Column extends Objects implements iObjectEvents
      */
     public function forbidsNull()
     {
-        $this->null = FALSE;
+        $this->null = false;
 
         // if the current default value for this column is NULL, it will be set to empty
         if (self::NULLVALUE == $this->getDefaultValue()) {
@@ -185,17 +185,17 @@ class Column extends Objects implements iObjectEvents
      * Default value, in case NULL is passed to the new/updated row
      *
      * @param mixed $value
-     * @param string $literalValue It helps when you send to use a function or variable. I.e.: DEFAULT CURRENT_TIMESTAMP. In this case you should use $obj->setDefaultValue('CURRENT_TIMESTAMP', TRUE);
+     * @param string $literalValue It helps when you send to use a function or variable.
+     * I.e.: DEFAULT CURRENT_TIMESTAMP. In this case you should use $obj->setDefaultValue('CURRENT_TIMESTAMP', TRUE);
      */
-    public function setDefaultValue($value, $literalValue = FALSE)
+    public function setDefaultValue($value, $literalValue = false)
     {
 
         // check if the column allows NULL value
-        if (NULL === $value || self::NULLVALUE == $value) {
+        if (null === $value || self::NULLVALUE == $value) {
             if ($this->isNullAllowed()) {
                 $value = self::NULLVALUE;
-            }
-            else {
+            } else {
                 // the column doesn't accepts NULL value, configures it to have no default value on it
                 $value = self::NODEFAULTVALUE;
             }
@@ -205,9 +205,10 @@ class Column extends Objects implements iObjectEvents
         if (self::NULLVALUE != $value && self::CUSTOMVALUE != $value && self::NODEFAULTVALUE != $value) {
 
             $sizeTypes = array_merge($this->getNumericTypes(), $this->getStringTypes());
-            if (FALSE !== array_search($this->getType(), $sizeTypes) ) {
+            if (false !== array_search($this->getType(), $sizeTypes) ) {
                 if (mb_strlen($value) > $this->getSize()) {
-                    $msg = "The informed default value [{$value}] for column '$this' is bigger [".(mb_strlen($value))."] than the size defined for this column allows [{$this->getSize()}]";
+                    $msg = "The informed default value [{$value}] for column '$this' is bigger " .
+                        "[".(mb_strlen($value))."] than the size defined for this column allows [{$this->getSize()}]";
                     throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
                 }
             }
@@ -234,7 +235,7 @@ class Column extends Objects implements iObjectEvents
      */
     public function signed()
     {
-        $this->signedInt = TRUE;
+        $this->signedInt = true;
         $this->markForAlter();
     }
 
@@ -244,7 +245,7 @@ class Column extends Objects implements iObjectEvents
      */
     public function unsigned()
     {
-        $this->signedInt = FALSE;
+        $this->signedInt = false;
         $this->markForAlter();
     }
 
@@ -276,11 +277,11 @@ class Column extends Objects implements iObjectEvents
      */
     public function isNumeric()
     {
-        if (FALSE !== array_search($this->getType(), $this->getNumericTypes())) {
-            return TRUE;
+        if (false !== array_search($this->getType(), $this->getNumericTypes())) {
+            return true;
         }
 
-        return FALSE;
+        return false;
     }
 
     public function typeStrategy()
@@ -354,17 +355,17 @@ class Column extends Objects implements iObjectEvents
         // in the JSON file, we will save the NULL value as empty
         if ($this->getNormalizedDefaultValue() == 'NULL') {
             $defaultValue = '';
-        }
-        else {
+        } else {
             $defaultValue = $this->getNormalizedDefaultValue();
         }
 
-        $json .= str_repeat(" ", $spaces) . "\"$this\": {" . PHP_EOL;
-        $json .= str_repeat(" ", $spaces) . "  \"type\": \"{$this->getType()}\"," . PHP_EOL;
-        $json .= str_repeat(" ", $spaces) . "  \"size\": \"{$this->getSize()}\"," . PHP_EOL;
-        $json .= str_repeat(" ", $spaces) . "  \"allowNull\": \"" . ($this->isNullAllowed() ? 'yes' : 'no') . "\"," . PHP_EOL;
-        $json .= str_repeat(" ", $spaces) . "  \"defaultValue\": \"$defaultValue\"" . PHP_EOL;
-        $json .= str_repeat(" ", $spaces) . "}," . PHP_EOL;
+        $spaceStrings = str_repeat(" ", $spaces);
+        $json .= $spaceStrings . "\"$this\": {" . PHP_EOL;
+        $json .= $spaceStrings . "  \"type\": \"{$this->getType()}\"," . PHP_EOL;
+        $json .= $spaceStrings . "  \"size\": \"{$this->getSize()}\"," . PHP_EOL;
+        $json .= $spaceStrings . "  \"allowNull\": \"" . ($this->isNullAllowed() ? 'yes' : 'no') . "\"," . PHP_EOL;
+        $json .= $spaceStrings . "  \"defaultValue\": \"$defaultValue\"" . PHP_EOL;
+        $json .= $spaceStrings . "}," . PHP_EOL;
 
         return $json;
     }

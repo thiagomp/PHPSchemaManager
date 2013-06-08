@@ -8,5 +8,5 @@ namespace PHPSchemaManager\Exceptions;
  */
 class ObjectsException extends \Exception
 {
-
+    //nothing to do
 }
