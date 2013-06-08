@@ -1,6 +1,7 @@
 <?php
 namespace PHPSchemaManager\Exceptions;
 
-class ManagerException extends ObjectsException {
+class ManagerException extends ObjectsException
+{
 
 }

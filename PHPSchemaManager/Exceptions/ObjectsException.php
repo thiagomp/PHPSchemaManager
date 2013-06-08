@@ -6,6 +6,7 @@ namespace PHPSchemaManager\Exceptions;
  *
  * @author tmelo
  */
-class ObjectsException extends \Exception {
+class ObjectsException extends \Exception
+{
 
 }

@@ -2,6 +2,7 @@
 
 namespace PHPSchemaManager\Exceptions;
 
-class SchemaException extends ManagerException {
+class SchemaException extends ManagerException
+{
 
 }
