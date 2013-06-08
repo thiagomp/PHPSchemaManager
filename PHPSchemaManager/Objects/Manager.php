@@ -1,7 +1,7 @@
 <?php
 namespace PHPSchemaManager\Objects;
 
-class Manager extends Objects  implements iFather
+class Manager extends Objects implements iFather
 {
 
     protected $ignoredSchemas = array();
@@ -15,7 +15,7 @@ class Manager extends Objects  implements iFather
 
     const DEFULTCONNECTION = 'default';
 
-    function __construct(\PHPSchemaManager\Connection $conn)
+    public function __construct(\PHPSchemaManager\Connection $conn)
     {
         $this->setConnection($conn);
     }
@@ -64,7 +64,7 @@ class Manager extends Objects  implements iFather
     {
         if (!empty($this->schemas)) {
             $conn = $this->getConnection();
-            foreach($this->schemas as $schema){
+            foreach ($this->schemas as $schema){
                 $conn->driver->flush($schema);
             }
         }
@@ -80,7 +80,7 @@ class Manager extends Objects  implements iFather
     {
         $this->fetchFromDatabase();
 
-        try{
+        try {
             $schemaName = strtolower($schema->getName());
             // check if there's a exclusive schema...
             if ($exclusiveSchema = $this->getExclusiveSchema()) {
@@ -262,7 +262,8 @@ class Manager extends Objects  implements iFather
             return true;
         }
 
-        throw new \PHPSchemaManager\Exceptions\SchemaException("Schema '$schema' couldn't be dropped from the current connection");
+        $msg = "Schema '$schema' couldn't be dropped from the current connection";
+        throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
     }
 
     /**
@@ -415,13 +416,13 @@ class Manager extends Objects  implements iFather
         }
 
         // get all the columns from the current table
-        foreach($items['columns'] as $columnName => $columnDefinitions) {
+        foreach ($items['columns'] as $columnName => $columnDefinitions) {
 
             $column = new Column($columnName);
 
-            foreach($columnDefinitions as $action => $definition) {
+            foreach ($columnDefinitions as $action => $definition) {
                 $action = strtolower($action);
-                switch($action) {
+                switch ($action) {
                     case 'type':
                         $column->setType($definition);
                         break;
@@ -432,7 +433,7 @@ class Manager extends Objects  implements iFather
                         strtolower($definition) == 'yes' ? $column->allowsNull() : $column->forbidsNull();
                         break;
                     case 'defaultvalue';
-                        $definition = empty($definition) ? NULL : $definition;
+                        $definition = empty($definition) ? null : $definition;
                         $column->setDefaultValue($definition);
                         break;
                     default:
@@ -441,7 +442,7 @@ class Manager extends Objects  implements iFather
                 }
             }
 
-          $table->addColumn($column);
+            $table->addColumn($column);
         }
 
     }
@@ -455,17 +456,17 @@ class Manager extends Objects  implements iFather
         }
 
         // get all the indexes from the current table
-        foreach($items['keys'] as $indexName => $indexDefinitions) {
+        foreach ($items['keys'] as $indexName => $indexDefinitions) {
 
             $index = new Index($indexName);
 
-            foreach($indexDefinitions as $action => $definition) {
+            foreach ($indexDefinitions as $action => $definition) {
                 switch ($action) {
                     case 'type':
                         $index->setType($definition);
                         break;
                     case 'columns':
-                        foreach($definition as $columnName) {
+                        foreach ($definition as $columnName) {
                             $index->addColumn($table->hasColumn($columnName));
                         }
                         break;
@@ -494,5 +495,4 @@ class Manager extends Objects  implements iFather
     {
         return $this->fetchAllowed;
     }
-
 }
