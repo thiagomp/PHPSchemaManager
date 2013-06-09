@@ -45,7 +45,7 @@ class Schema extends Objects implements iFather, iObjectEvents
             /* @var $table \PHPSchemaManager\Objects\Table */
 
             // take into consideration if this schema is case sensitve or not
-            if ( $table->nameCompare($tableName)) {
+            if ($table->nameCompare($tableName)) {
 
                 // check if the table is present even if it's marked to be deleted
                 if ($this->trulyCheckIfHasTable) {
@@ -75,8 +75,8 @@ class Schema extends Objects implements iFather, iObjectEvents
             // Check if the table should be replaced in case the library receives a
             // table that already exists in the schema
             if ($replaceTable) {
-              $oldTable->markForDeletion();
-              $this->requestFlush();
+                $oldTable->markForDeletion();
+                $this->requestFlush();
             } else {
                 // if the table is not to be replaced, throws an Exception
                 $msg = "Table '$table' already exists." . PHP_EOL .
@@ -185,7 +185,7 @@ class Schema extends Objects implements iFather, iObjectEvents
     public function saveSchemaJSON($filePath)
     {
         $json = $this->printJSON();
-        if(false === file_put_contents($filePath, $json)) {
+        if (false === file_put_contents($filePath, $json)) {
             throw new \PHPSchemaManager\Exceptions\SchemaException("Unable to write JSON file at $filePath");
         }
     }
