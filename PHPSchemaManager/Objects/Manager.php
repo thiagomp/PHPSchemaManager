@@ -64,7 +64,7 @@ class Manager extends Objects implements iFather
     {
         if (!empty($this->schemas)) {
             $conn = $this->getConnection();
-            foreach ($this->schemas as $schema){
+            foreach ($this->schemas as $schema) {
                 $conn->driver->flush($schema);
             }
         }
@@ -432,7 +432,7 @@ class Manager extends Objects implements iFather
                     case 'allownull':
                         strtolower($definition) == 'yes' ? $column->allowsNull() : $column->forbidsNull();
                         break;
-                    case 'defaultvalue';
+                    case 'defaultvalue':
                         $definition = empty($definition) ? null : $definition;
                         $column->setDefaultValue($definition);
                         break;

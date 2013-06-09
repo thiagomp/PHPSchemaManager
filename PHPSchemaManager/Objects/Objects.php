@@ -204,9 +204,10 @@ class Objects
      */
     protected function setAction($action)
     {
-        $expectedActions = array(self::ACTIONALTER, self::ACTIONCREATE, self::ACTIONDELETE, self::STATUSSYNCED, self::STATUSDELETED);
+        $expectedActions = array(self::ACTIONALTER, self::ACTIONCREATE, self::ACTIONDELETE, self::STATUSSYNCED,
+            self::STATUSDELETED);
 
-        if (!FALSE !== array_search($action, $expectedActions)) {
+        if (!false !== array_search($action, $expectedActions)) {
             $this->action = $action;
         } else {
             throw new \PHPSchemaManager\Exceptions\ObjectsException("Action $action is not recognized.");
@@ -239,7 +240,7 @@ class Objects
 
     protected function ignoreDeleted()
     {
-        $this->ignoreDeleted = TRUE;
+        $this->ignoreDeleted = true;
     }
 
     protected function regardDeleted()
