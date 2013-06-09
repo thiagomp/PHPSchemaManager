@@ -1,16 +1,17 @@
 <?php
 namespace PHPSchemaManager\Objects;
+
 /**
  * Description of Table
  *
  * @author thiago
  */
-class Table extends Objects implements iFather, iObjectEvents
+class Table extends Objects implements FatherInterface, ObjectEventsInterface
 {
 
     protected $columns = array();
     protected $indexes = array();
-    protected $trulyCheckIfHasObject = FALSE;
+    protected $trulyCheckIfHasObject = false;
 
     public function __construct($tableName)
     {
@@ -33,7 +34,7 @@ class Table extends Objects implements iFather, iObjectEvents
         $oldColumn = $this->trulyHasObject($column);
         if (!empty($oldColumn)) {
             if ($oldColumn->shouldDelete()) {
-              $this->requestFlush();
+                $this->requestFlush();
             }
         }
 
@@ -70,7 +71,8 @@ class Table extends Objects implements iFather, iObjectEvents
      * Check if the Table has the column informed in the parameter
      *
      * @param string $columnName Column name to be searched
-     * @return \PHPSchemaManager\Objects\Column|boolean It returns the Column object if the column is found or FALSE in case the column is not found
+     * @return \PHPSchemaManager\Objects\Column|boolean It returns the Column object if the column is found or FALSE in
+     *   case the column is not found
      */
     public function hasColumn($columnName)
     {
@@ -90,7 +92,8 @@ class Table extends Objects implements iFather, iObjectEvents
         if (false !== $column) {
             $column->drop();
         } else {
-            throw new \PHPSchemaManager\Exceptions\TableException("Column $columnName can't be dropped since it wasn't found in the table $this");
+            $msg = "Column $columnName can't be dropped since it wasn't found in the table $this";
+            throw new \PHPSchemaManager\Exceptions\TableException($msg);
         }
 
         return true;
@@ -108,7 +111,7 @@ class Table extends Objects implements iFather, iObjectEvents
         $oldIndex = $this->trulyHasObject($index);
 
         // Check if the Index already exists
-        if(!empty($oldIndex)) {
+        if (!empty($oldIndex)) {
             // The informed index already exists in the table...
 
             // If the Index is a PK and in the Table object already have a PK defined
@@ -142,7 +145,8 @@ class Table extends Objects implements iFather, iObjectEvents
      * Check if the Table has the index informed in the parameter
      *
      * @param string $indexName Index name to be searched
-     * @return \PHPSchemaManager\Objects\Index|boolean It returns the Index object if the index is found or FALSE in case the index is not found
+     * @return \PHPSchemaManager\Objects\Index|boolean It returns the Index object if the index is found or FALSE in
+     *   case the index is not found
      */
     public function hasIndex($indexName)
     {
@@ -162,7 +166,8 @@ class Table extends Objects implements iFather, iObjectEvents
         if (false !== $index) {
             $index->drop();
         } else {
-            throw new \PHPSchemaManager\Exceptions\TableException("Index $indexName can't be dropped since it wasn't found in the table $this");
+            $msg = "Index $indexName can't be dropped since it wasn't found in the table $this";
+            throw new \PHPSchemaManager\Exceptions\TableException($msg);
         }
 
         return true;
@@ -178,11 +183,11 @@ class Table extends Objects implements iFather, iObjectEvents
         foreach ($this->getIndexes() as $index) {
             /* @var $index \PHPSchemaManager\Objects\Index */
             if ($index->isPrimaryKey()) {
-                  return $index;
+                return $index;
             }
-      }
+        }
 
-      return false;
+        return false;
     }
 
     public function informChange()
@@ -195,7 +200,7 @@ class Table extends Objects implements iFather, iObjectEvents
         if ($object instanceof Column) {
             $this->removeColumn($object);
         } elseif ($object instanceof Index) {
-           $this->removeIndex($object);
+            $this->removeIndex($object);
         }
     }
 
@@ -251,7 +256,7 @@ class Table extends Objects implements iFather, iObjectEvents
     {
         $str = "{$this} [{$this->getAction()}]" . PHP_EOL;
         $columns = $this->getColumns();
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
             $str .= "  {$column->printTxt()}" . PHP_EOL;
         }
         $str .= "  " . str_repeat(".", 28) . PHP_EOL;
@@ -259,7 +264,7 @@ class Table extends Objects implements iFather, iObjectEvents
         $indexes = $this->getIndexes();
         if (!empty($indexes)) {
             $str .= "  indexes" . PHP_EOL;
-            foreach($indexes as $index) {
+            foreach ($indexes as $index) {
                 $str .= $index->printTxt();
             }
         } else {
@@ -339,7 +344,7 @@ class Table extends Objects implements iFather, iObjectEvents
                 $column->markAsDeleted();
                 $column->destroy();
             } else {
-              // inform that all other columns are now synced
+                // inform that all other columns are now synced
                 $column->persisted();
             }
         }
@@ -350,14 +355,14 @@ class Table extends Objects implements iFather, iObjectEvents
 
         foreach ($this->getIndexes() as $index) {
 
-          // check if the column must be removed from the table object
-          if ($index->shouldDelete()) {
+            // check if the column must be removed from the table object
+            if ($index->shouldDelete()) {
                 $index->markAsDeleted();
                 $index->destroy();
-          } else {
+            } else {
                 // inform that all other columns are now synced
                 $index->persisted();
-          }
+            }
         }
     }
 

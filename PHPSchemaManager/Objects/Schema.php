@@ -1,7 +1,7 @@
 <?php
 namespace PHPSchemaManager\Objects;
 
-class Schema extends Objects implements iFather, iObjectEvents
+class Schema extends Objects implements FatherInterface, ObjectEventsInterface
 {
 
     protected $configuration;

@@ -1,7 +1,7 @@
 <?php
 namespace PHPSchemaManager\Objects;
 
-class Manager extends Objects implements iFather
+class Manager extends Objects implements FatherInterface
 {
 
     protected $ignoredSchemas = array();

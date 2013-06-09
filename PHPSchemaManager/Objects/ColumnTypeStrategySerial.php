@@ -6,7 +6,7 @@ namespace PHPSchemaManager\Objects;
  *
  * @author thiago
  */
-class ColumnTypeStrategySerial implements iColumnTypeStrategy
+class ColumnTypeStrategySerial implements ColumnTypeStrategyInterface
 {
 
     protected $column;

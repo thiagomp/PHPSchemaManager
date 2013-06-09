@@ -6,7 +6,7 @@ namespace PHPSchemaManager\Objects;
  *
  * @author thiago
  */
-class Index extends Objects implements iObjectEvents
+class Index extends Objects implements ObjectEventsInterface
 {
 
     protected $indexName;

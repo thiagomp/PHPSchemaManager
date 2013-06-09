@@ -6,7 +6,7 @@ namespace PHPSchemaManager\Objects;
  *
  * @author thiago
  */
-class Column extends Objects implements iObjectEvents
+class Column extends Objects implements ObjectEventsInterface
 {
 
     protected $name = '';

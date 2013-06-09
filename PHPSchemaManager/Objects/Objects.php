@@ -64,7 +64,7 @@ class Objects
             $this->setAction(self::ACTIONDELETE);
 
             // trigger the onDelete method, in case the object implements it
-            if ($this instanceof iObjectEvents) {
+            if ($this instanceof ObjectEventsInterface) {
                 $this->onDelete();
             }
 
@@ -135,7 +135,7 @@ class Objects
         }
 
         // trigger the onDestroy method, in case the object implements it
-        if ($this instanceof iObjectEvents) {
+        if ($this instanceof ObjectEventsInterface) {
             $this->onDestroy();
         }
 

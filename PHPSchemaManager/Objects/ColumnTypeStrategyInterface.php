@@ -6,6 +6,7 @@ namespace PHPSchemaManager\Objects;
  *
  * @author thiago
  */
-interface iColumnTypeStrategy {
-  public function configure();
+interface ColumnTypeStrategyInterface
+{
+    public function configure();
 }
