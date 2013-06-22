@@ -22,11 +22,11 @@ class Build {
     function execute() {
         $psmDir = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . '..');
         $reportDir = $this->getCodeCoverageOutputDir();
-        $branchDir = $reportDir . $this->getBranch() . DIRECTORY_SEPARATOR;
+        $branchDir = $reportDir . DIRECTORY_SEPARATOR . $this->getBranch();
 
         $this->deleteDirectory($reportDir);
         mkdir($reportDir, 0777);
-		mkdir($branchDir, 0777);
+        mkdir($branchDir, 0777);
 
         copy(realpath(dirname(__FILE__)) . DIRECTORY_SEPARATOR . "codeCoverageIndex.html", $reportDir . "index.html");
 
@@ -95,8 +95,7 @@ class Build {
         }
         echo "Starting Code Coverage deploy to appfog..." . PHP_EOL;
 
-        $cmd = "af login --email $afEmail --passwd $afPassword && af update $afApp --path '{$this->getCodeCoverageOutputDir()}'";
-		echo "REM $cmd" . PHP_EOL;
+        $cmd = "af login --email $afEmail --passwd $afPassword && cd {$this->getCodeCoverageOutputDir()} && af update $afApp";
         $ret = system($cmd);
 
         if (false === $ret) {
@@ -106,7 +105,7 @@ class Build {
 
     private function deleteDirectory($dir) {
         if (!file_exists($dir)) return true;
-        
+
         if (!is_dir($dir) || is_link($dir)) return unlink($dir);
             foreach (scandir($dir) as $item) {
                 if ($item == '.' || $item == '..') continue;
