@@ -22,15 +22,16 @@ class Build {
     function execute() {
         $psmDir = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . '..');
         $reportDir = $this->getCodeCoverageOutputDir();
-        $branchDir = $reportDir . DIRECTORY_SEPARATOR . $this->getBranch();
+        $branchDir = $reportDir . $this->getBranch() . DIRECTORY_SEPARATOR;
 
         $this->deleteDirectory($reportDir);
         mkdir($reportDir, 0777);
+		mkdir($branchDir, 0777);
 
         copy(realpath(dirname(__FILE__)) . DIRECTORY_SEPARATOR . "codeCoverageIndex.html", $reportDir . "index.html");
 
         // First, execute the tests
-        $cmd = "cd $psmDir; phpunit --testsuite PHPSchemaManagerSuite --coverage-html $branchDir";
+        $cmd = "cd $psmDir && phpunit --testsuite PHPSchemaManagerSuite --coverage-html $branchDir";
         $ret = system($cmd);
 
         if (false === $ret) {
@@ -39,7 +40,7 @@ class Build {
         echo "Finished PHPUnit..." . PHP_EOL;
 
         // TODO find a way to check if PSR2 coding standard is installed in the system
-        $cmd = "cd $psmDir; phpcs --standard=PSR2 PHPSchemaManager";
+        $cmd = "cd $psmDir && phpcs --standard=PSR2 PHPSchemaManager";
         $ret = system($cmd);
 
         if (false === $ret) {
@@ -70,7 +71,7 @@ class Build {
     private function deployPagoda()
     {
         $message = "Automatic report update";
-        $cmd = "cd {$this->getCodeCoverageOutputDir()}; git add . && git commit -m '$message' && git push pagoda --all";
+        $cmd = "cd {$this->getCodeCoverageOutputDir()} && git add . && git commit -m '$message' && git push pagoda --all";
 
         $ret = system($cmd);
 
@@ -94,7 +95,8 @@ class Build {
         }
         echo "Starting Code Coverage deploy to appfog..." . PHP_EOL;
 
-        $cmd = "af login --email $afEmail --passwd $afPassword && af update $afApp --path {$this->getCodeCoverageOutputDir()}";
+        $cmd = "af login --email $afEmail --passwd $afPassword && af update $afApp --path '{$this->getCodeCoverageOutputDir()}'";
+		echo "REM $cmd" . PHP_EOL;
         $ret = system($cmd);
 
         if (false === $ret) {
@@ -104,6 +106,7 @@ class Build {
 
     private function deleteDirectory($dir) {
         if (!file_exists($dir)) return true;
+        
         if (!is_dir($dir) || is_link($dir)) return unlink($dir);
             foreach (scandir($dir) as $item) {
                 if ($item == '.' || $item == '..') continue;
