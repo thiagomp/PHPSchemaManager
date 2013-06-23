@@ -4,6 +4,8 @@ class Build {
     protected $branch;
     protected $codeCoverageOutputDir;
 
+    const AFAPPNAME = "phpsm";
+
     public function __construct($branch = 'development')
     {
         $this->branch = empty($branch) ? 'development' : $branch;
@@ -26,6 +28,8 @@ class Build {
 
         $this->deleteDirectory($reportDir);
         mkdir($reportDir, 0777);
+        $this->pullApplication();
+        $this->deleteDirectory($branchDir);
         mkdir($branchDir, 0777);
 
         copy(realpath(dirname(__FILE__)) . DIRECTORY_SEPARATOR . "codeCoverageIndex.html", $reportDir . "index.html");
@@ -68,6 +72,15 @@ class Build {
         }
     }
 
+    private function pullApplication() {
+        $cmd = "{$this->getAppFogLogin()} && cd {$this->getCodeCoverageOutputDir()} && af pull " . self::AFAPPNAME;
+        $ret = system($cmd);
+
+        if (false === $ret) {
+            die("error trying to pull the report from appfog" . PHP_EOL);
+        }
+    }
+
     private function deployPagoda()
     {
         $message = "Automatic report update";
@@ -82,10 +95,20 @@ class Build {
 
     private function deployAppFog()
     {
+        echo "Starting Code Coverage deploy to appfog..." . PHP_EOL;
+
+        $cmd = "{$this->getAppFogLogin()} && cd {$this->getCodeCoverageOutputDir()} && af update " . self::AFAPPNAME;
+        $ret = system($cmd);
+
+        if (false === $ret) {
+            die("error trying to push the report to appfog" . PHP_EOL);
+        }
+    }
+
+    private function getAppFogLogin() {
         // check if expected variables exists
         $afEmail = getenv('AFEMAIL');
         $afPassword = getenv('AFPASSWORD');
-        $afApp = "phpsm";
 
         if (empty($afEmail) || empty($afPassword)) {
             echo "Will not deploy the code coverage results" . PHP_EOL;
@@ -93,14 +116,8 @@ class Build {
             var_dump($_ENV);
             return 0;
         }
-        echo "Starting Code Coverage deploy to appfog..." . PHP_EOL;
 
-        $cmd = "af login --email $afEmail --passwd $afPassword && cd {$this->getCodeCoverageOutputDir()} && af update $afApp";
-        $ret = system($cmd);
-
-        if (false === $ret) {
-            die("error trying to push the report to appfog" . PHP_EOL);
-        }
+        return "af login --email $afEmail --passwd $afPassword";
     }
 
     private function deleteDirectory($dir) {
