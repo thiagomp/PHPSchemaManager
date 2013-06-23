@@ -75,7 +75,9 @@ class Build {
     private function pullApplication() {
         echo "Pulling the app from appfog..." . PHP_EOL;
 
-        $cmd = "{$this->getAppFogLogin()} && cd {$this->getCodeCoverageOutputDir()} && af pull " . self::AFAPPNAME;
+        $appDir = dirname($this->getCodeCoverageOutputDir());
+
+        $cmd = "{$this->getAppFogLogin()} && cd $appDir && af pull " . self::AFAPPNAME;
         $ret = system($cmd);
 
         if (false === $ret) {
