@@ -27,7 +27,6 @@ class Build {
         $branchDir = $reportDir . DIRECTORY_SEPARATOR . $this->getBranch();
 
         $this->deleteDirectory($reportDir);
-        mkdir($reportDir, 0777);
         $this->pullApplication();
         $this->deleteDirectory($branchDir);
         mkdir($branchDir, 0777);
