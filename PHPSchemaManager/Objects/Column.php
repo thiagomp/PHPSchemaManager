@@ -16,6 +16,7 @@ class Column extends Objects implements ObjectEventsInterface
     protected $defaultValueLiteral;
     protected $signedInt;
     protected $sizeParts;
+    protected $references;
 
     protected $size = 0;
 
@@ -310,6 +311,14 @@ class Column extends Objects implements ObjectEventsInterface
     public function isNumericType()
     {
         return in_array($this->getType(), $this->getNumericTypes());
+    }
+
+    public function references(Column $column) {
+        $idxName = $column->getName() . "IdxFK";
+
+        $reference = new ColumnReference($idxName);
+        $this->references[$idxName] = $reference;
+        return $reference;
     }
 
     public function onDelete()
