@@ -381,15 +381,17 @@ class Column extends Objects implements ObjectEventsInterface
         // normalizes the default value to have a better presentation when printed
         $defaultValue = $this->getNormalizedDefaultValue();
         if ($this->isStringType()) {
-            $defaultValue = "'$defaultValue'";
+            $defaultValue = ", '$defaultValue'";
         }
+
+        $fkInfo = ($this->isFK() ? ", FK(table:" . $this->getReferencedColumn()->getFather() . ", column:"
+                    . $this->getReferencedColumn() . ", on delete:" . $this->getReference()->getActionOnDelete() .
+                    ", on update:" . $this->getReference()->getActionOnUpdate() . ") " : ' ');
 
         return "$this: {$this->getType()}({$this->getSize()}), " .
                 ($this->isNullAllowed() ? "NULL" : "NOT NULL") .
-                ", {$defaultValue}" .
-                ($this->isFK() ? "FK(table:" . $this->getReferencedColumn()->getFather() . ", column:"
-                    . $this->getReferencedColumn() . ", on delete:" . $this->getReference()->getActionOnDelete() .
-                    ", on update:" . $this->getReference()->getActionOnUpdate() . ") " : '') .
+                $defaultValue .
+                $fkInfo .
                 "[{$this->getAction()}]";
     }
 
