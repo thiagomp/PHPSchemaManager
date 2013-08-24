@@ -16,7 +16,8 @@ class Column extends Objects implements ObjectEventsInterface
     protected $defaultValueLiteral;
     protected $signedInt;
     protected $sizeParts;
-    protected $references;
+    protected $reference = null;
+    protected $referencedColumn = null;
 
     protected $size = 0;
 
@@ -313,12 +314,49 @@ class Column extends Objects implements ObjectEventsInterface
         return in_array($this->getType(), $this->getNumericTypes());
     }
 
-    public function references(Column $column) {
-        $idxName = $column->getName() . "IdxFK";
+    public function references(Column $column, $idxName = null)
+    {
+        if (empty($idxName)) {
+            $idxName = $column->getName() . "IdxFK";
+        }
 
-        $reference = new ColumnReference($idxName);
-        $this->references[$idxName] = $reference;
-        return $reference;
+        $this->reference = new ColumnReference($idxName);;
+        $this->referencedColumn = $column;
+        return $this->reference;
+    }
+
+    /**
+     * Check if the column if a foreign key of another table
+     */
+    public function isFK()
+    {
+        return !empty($this->reference);
+    }
+
+    /**
+     * Get the referenced column by this FK
+     *
+     * @return \PhpSchemaManager\Objects\Column | null
+     */
+    public function getReferencedColumn()
+    {
+        if ($this->isFK()) {
+            return $this->referencedColumn;
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     * @return \PHPSchemaManager\Objects\ColumnReference | null
+     */
+    public function getReference() {
+        if ($this->isFK()) {
+            return $this->reference;
+        }
+
+        return null;
     }
 
     public function onDelete()
@@ -348,7 +386,11 @@ class Column extends Objects implements ObjectEventsInterface
 
         return "$this: {$this->getType()}({$this->getSize()}), " .
                 ($this->isNullAllowed() ? "NULL" : "NOT NULL") .
-                ", {$defaultValue} [{$this->getAction()}]";
+                ", {$defaultValue}" .
+                ($this->isFK() ? "FK(table:" . $this->getReferencedColumn()->getFather() . ", column:"
+                    . $this->getReferencedColumn() . ", on delete:" . $this->getReference()->getActionOnDelete() .
+                    ", on update:" . $this->getReference()->getActionOnUpdate() . ") " : '') .
+                "[{$this->getAction()}]";
     }
 
     /**

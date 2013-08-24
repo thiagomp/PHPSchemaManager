@@ -18,6 +18,9 @@ class ColumnReference extends Objects implements ObjectEventsInterface
     const SETNULL = 'setnull';
     const NOACTION = 'noaction';
 
+    protected $actionOnUpdate;
+    protected $actionOnDelete;
+
     public function __construct($referenceName)
     {
         $this->setName($referenceName);
@@ -35,11 +38,31 @@ class ColumnReference extends Objects implements ObjectEventsInterface
         $this->setAction(__FUNCTION__, $referenceOption);
     }
 
-    protected function setAction($action, $referenceOption) {
+    protected function setAction($action, $referenceOption)
+    {
         if ($this->isReferenceOptionsValid($referenceOption)) {
             $this->{$action} = $referenceOption;
         }
     }
+
+    /**
+     *
+     * @return string
+     */
+    public function getActionOnUpdate()
+    {
+        return $this->actionOnUpdate;
+    }
+
+    /**
+     *
+     * @return string
+     */
+    public function getActionOnDelete()
+    {
+        return $this->actionOnDelete;
+    }
+
 
     protected function isReferenceOptionsValid($option) {
         if (FALSE !== array_search($option, array(self::CASCADE, self::NOACTION, self::RESTRICT, self::SETNULL))) {
