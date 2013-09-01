@@ -76,9 +76,16 @@ class Manager extends Objects implements FatherInterface
      * @param \PHPSchemamanager\Objects\Schema $schema
      * @return Boolean TRUE if the schema could be added or FALSE if the schema couldn't be added
      */
-    public function addSchema(Schema $schema)
+    public function addSchema(Schema &$schema)
     {
         $this->fetchFromDatabase();
+
+        // Check if a schema with the same name informed in the method already exists in the database
+        if ($this->hasSchema($schema->getName())) {
+            // If the schema exists in the database, updates the reference of the informed schema to point the same one
+            //  found in the database.
+            $schema = $this->hasSchema($schema->getName());
+        }
 
         try {
             $schemaName = strtolower($schema->getName());
@@ -108,6 +115,20 @@ class Manager extends Objects implements FatherInterface
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    /**
+     *
+     * @param string $schemaName
+     * @return \PHPSchemaManager\Objects\Schema|Boolean
+     */
+    public function createNewSchema($schemaName)
+    {
+        $s = new Schema($schemaName);
+        if ($this->addSchema($s)) {
+            return $s;
+        }
+        return false;
     }
 
     /**
@@ -221,7 +242,7 @@ class Manager extends Objects implements FatherInterface
             throw new \PHPSchemaManager\Exceptions\ManagerException($msg);
         }
 
-        $schema = new Schema($schemaName);
+        $schema = $this->createNewSchema($schemaName);
 
         // get all the tables from the current schema
         foreach ($json[$schemaName] as $tableName => $items) {

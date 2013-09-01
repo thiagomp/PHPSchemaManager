@@ -3,7 +3,7 @@ namespace PHPSchemaManager\Drivers;
 
 class DriverMysql implements DriverInterface
 {
-  
+
     protected $sm;
     protected $conn;
     protected $databaseSelected = false;
@@ -16,19 +16,19 @@ class DriverMysql implements DriverInterface
     {
         $this->conn = $conn;
     }
-  
-  
+
+
     // Methods from the interface
     public function connect()
     {
         if (empty($this->linkIdentifier)) {
 
             $port = $this->conn->port;
-      
+
             if (empty($port)) {
                 $port = "3306";
             }
-      
+
             $host = "{$this->conn->hostname}:{$port}";
             $username = $this->conn->username;
             $password = $this->conn->password;
@@ -46,7 +46,7 @@ class DriverMysql implements DriverInterface
 
     public function selectDb($dbName = null)
     {
-    
+
         if (empty($dbName)) {
             $dbName = $this->getDatabaseSelected();
         }
@@ -119,7 +119,7 @@ class DriverMysql implements DriverInterface
             $schema->addTable($table);
         }
     }
-  
+
     public function dbQuery($sql)
     {
 
@@ -145,7 +145,7 @@ class DriverMysql implements DriverInterface
         $row = $this->dbFetchArray($result);
         return $row["Create Table"];
     }
-  
+
     public function getTableCount($table)
     {
         $this->selectDb();
@@ -154,7 +154,7 @@ class DriverMysql implements DriverInterface
         $res = $this->dbFetchArray($this->dbQuery($sql));
         return (int)$res['num_rows'];
     }
-  
+
     public function flush(\PHPSchemaManager\Objects\Schema $schema)
     {
         // if the schema should be ignored, just mark it as synced and move on
@@ -222,7 +222,7 @@ class DriverMysql implements DriverInterface
         // the schema and its tables are now persisted
         return true;
     }
-  
+
     public function getVersion()
     {
         $sql = "SHOW VARIABLES LIKE '%version%'";
@@ -236,7 +236,7 @@ class DriverMysql implements DriverInterface
 
         return "Not found";
     }
-  
+
     public function checkLowerCaseTableNames()
     {
         //http://dev.mysql.com/doc/refman/5.0/en/identifier-case-sensitivity.html
@@ -252,7 +252,7 @@ class DriverMysql implements DriverInterface
             return false;
         }
     }
-  
+
     // Methods specific for MySQL
     protected function getColumns(\PHPSchemaManager\Objects\Table $table)
     {
@@ -322,7 +322,7 @@ class DriverMysql implements DriverInterface
             $table->addColumn($column);
         }
     }
-  
+
     public function getIndexes(\PHPSchemaManager\Objects\Table $table)
     {
         //TODO find another way to get the indexes from mysql tables, to support older versions of MySQL
@@ -376,20 +376,21 @@ class DriverMysql implements DriverInterface
         // select the previous selected database again
         $this->selectDb($currentSelectedDb);
     }
-  
+
     protected function alterTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
         $sql = "ALTER TABLE $table" . PHP_EOL;
         $sqlParts[] = rtrim($this->alterTableColumns($table), PHP_EOL);
         $sqlParts[] = rtrim($this->alterTableIndexes($table), PHP_EOL);
+        $sqlParts[] = rtrim($this->alterTableForeignKeys($table), PHP_EOL);
 
         // normalizes the query to avoid issues
         $sql .= trim(implode("," . PHP_EOL, $sqlParts), "," . PHP_EOL) . PHP_EOL;
 
         $this->dbQuery($sql);
     }
-  
+
     protected function alterTableColumns(\PHPSchemaManager\Objects\Table $table)
     {
         $i = 0;
@@ -418,7 +419,7 @@ class DriverMysql implements DriverInterface
 
         return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
     }
-  
+
     protected function alterTableIndexes(\PHPSchemaManager\Objects\Table $table)
     {
         $i = 0;
@@ -472,7 +473,56 @@ class DriverMysql implements DriverInterface
 
         return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
     }
-  
+
+    protected function alterTableForeignKeys(\PHPSchemaManager\Objects\Table $table)
+    {
+        $instruction = '';
+        $instructionColumn = '';
+        $instructionReferencedColumn = '';
+
+        /* @var $column \PHPSchemaManager\Objects\Column */
+        foreach ($table->getColumns() as $column) {
+
+            if ($column->shouldCreate() && $column->isFK()) {
+                $instructionColumn .= "$column, ";
+                $instructionReferencedColumn .= $column->getReferencedColumn() . ", ";
+            }
+
+        }
+
+        if (!empty($instructionColumn)) {
+            $instructionColumn = rtrim($instructionColumn, ", ");
+            $instructionReferencedColumn = rtrim($instructionReferencedColumn, ", ");
+            $instruction = "ADD FOREIGN KEY " . $column->getReference() . " ($instructionColumn)" . PHP_EOL .
+                            "\tREFERENCES " . $column->getFather() . " ($instructionReferencedColumn)" . PHP_EOL .
+                            "\tON DELETE " . $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete()) . PHP_EOL .
+                            "\tON UPDATE " . $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate()) . PHP_EOL;
+        }
+
+        return $instruction;
+    }
+
+    protected function getReferenceOptionDescription($referenceOption = null)
+    {
+        switch ($referenceOption) {
+            case \PHPSchemaManager\Objects\ColumnReference::NOACTION:
+                $description = "NO ACTION";
+                break;
+            case \PHPSchemaManager\Objects\ColumnReference::RESTRICT:
+                $description = "RESTRICT";
+                break;
+            case \PHPSchemaManager\Objects\ColumnReference::SETNULL:
+                $description = "SET NULL";
+                break;
+            case \PHPSchemaManager\Objects\ColumnReference::CASCADE:
+            default:
+                $description = "CASCADE";
+        }
+
+        return $description;
+    }
+
+
     protected function deleteTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
@@ -481,7 +531,7 @@ class DriverMysql implements DriverInterface
         $table->markAsDeleted();
         $table->destroy();
     }
-  
+
     protected function createTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
@@ -502,7 +552,7 @@ class DriverMysql implements DriverInterface
 
     /**
      * Create database
-     * 
+     *
      * @param string $dbName
      */
     protected function createDatabase($dbName)
@@ -514,7 +564,7 @@ class DriverMysql implements DriverInterface
             //do nothing, if the database is already created, no problem
         }
     }
-  
+
     protected function dropDatabase(\PHPSchemaManager\Objects\Schema $schema)
     {
         $sql = "DROP DATABASE $schema";

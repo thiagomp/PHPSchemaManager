@@ -48,7 +48,11 @@ class TableTest
       $bookId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
       $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
+      $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
       $bookAuthorId->references($authorTable->hasColumn('id'));
+
+      $this->assertInstanceOf('\PHPSchemaManager\Objects\ColumnReference', $bookAuthorId->getReference());
+      $this->assertEquals('id', $bookAuthorId->getReferencedColumn()->getName(), 'The column id from the author table was expected to be referenced');
 
       $bookTitle = new \PHPSchemaManager\Objects\Column('title');
       $bookTitle->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
@@ -73,8 +77,20 @@ class TableTest
       $orderAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
       $orderAuthorId->references($bookTable->hasColumn('authorId'));
 
+      $this->assertInstanceOf('\PHPSchemaManager\Objects\ColumnReference', $orderBookId->getReference());
+      $this->assertEquals('id', $orderBookId->getReferencedColumn()->getName(), 'The column id from the author table was expected to be referenced');
+      $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
+          $orderBookId->getReference()->getActionOnUpdate(),
+          'When a object is referenced, the updates should be cascaded by default');
+      $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
+          $orderBookId->getReference()->getActionOnDelete(),
+          'When a object is referenced, the deletions should be cascaded by default');
+
       $orderCustomerId = new \PHPSchemaManager\Objects\Column('customerId');
-      $orderCustomerId->references($customerTable->hasColumn('id'));
+      $orderCustomerId->references($customerTable->hasColumn('id'))->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+      $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::NOACTION,
+          $orderCustomerId->getReference()->getActionOnDelete(),
+          'the customerId field is expected to ignore when a deletion is onde');
 
       $orderTable = new \PHPSchemaManager\Objects\Table('order');
       $orderTable->addColumn($orderNo);

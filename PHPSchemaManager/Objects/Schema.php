@@ -69,6 +69,15 @@ class Schema extends Objects implements FatherInterface, ObjectEventsInterface
      */
     public function addTable(Table $table, $replaceTable = false)
     {
+
+        // Check if this schema object is already associated with a Manager
+        // this is needed to avoid a table being added without first retrieving all existing tables from this schema
+        if (!$this->getFather()) {
+            $msg = "Add this schema object to a manager before adding tables on it" . PHP_EOL .
+                    "You can use createNewSchema method from Manager class to create the schema object";
+            throw new \PHPSchemaManager\Exceptions\SchemaException($msg);
+        }
+
         // check if the table exists in the schema
         if ($oldTable = $this->hasTable($table->getName())) {
 

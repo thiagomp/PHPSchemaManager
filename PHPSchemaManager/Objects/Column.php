@@ -314,6 +314,13 @@ class Column extends Objects implements ObjectEventsInterface
         return in_array($this->getType(), $this->getNumericTypes());
     }
 
+    /**
+     * Informs which column will be referenced by this foreign key
+     *
+     * @param \PHPSchemaManager\Objects\Column $column Column being referenced
+     * @param string $idxName Optional - index name
+     * @return \PhpSchemaManager\Objects\ColumnReference
+     */
     public function references(Column $column, $idxName = null)
     {
         if (empty($idxName)) {
@@ -336,7 +343,7 @@ class Column extends Objects implements ObjectEventsInterface
     /**
      * Get the referenced column by this FK
      *
-     * @return \PhpSchemaManager\Objects\Column | null
+     * @return \PhpSchemaManager\Objects\Column|null
      */
     public function getReferencedColumn()
     {
@@ -348,8 +355,9 @@ class Column extends Objects implements ObjectEventsInterface
     }
 
     /**
+     * Get the reference object
      *
-     * @return \PHPSchemaManager\Objects\ColumnReference | null
+     * @return \PHPSchemaManager\Objects\ColumnReference|null
      */
     public function getReference() {
         if ($this->isFK()) {
