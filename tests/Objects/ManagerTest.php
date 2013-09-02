@@ -681,7 +681,7 @@ class ManagerTest
     $this->assertFalse($m->hasSchema('testInstitution'), "Schema 'testInstitution' should be deleted by now");
   }
 
-  public function testForeignKeyAlterTable() {
+  public function testForeignKeyCreateTable() {
 
       $authorId = new \PHPSchemaManager\Objects\Column('id');
       $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
@@ -699,6 +699,9 @@ class ManagerTest
 
       $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
       $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
+      $bookAuthorId->setSize(10);
+      $bookAuthorId->unsigned();
+      $bookAuthorId->references($authorId);
 
       $bookTitle = new \PHPSchemaManager\Objects\Column('title');
       $bookTitle->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
@@ -710,14 +713,34 @@ class ManagerTest
       $bookTable->addColumn($bookTitle);
 
       $s = $this->sm->createNewSchema("ModernLibrary");
+      $s->addTable($authorTable, true);
       $s->addTable($bookTable, true);
 
       $s->flush();
 
-      $bookAuthorId->references($authorId);
-
-      $s->flush();
-
       $s->drop();
+  }
+
+/**
+   * @expectedException \PHPSchemaManager\Exceptions\ColumnException
+   */
+  public function testForeignKeyCreationInconsistency() {
+      $authorId = new \PHPSchemaManager\Objects\Column('id');
+      $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+
+      $authorName = new \PHPSchemaManager\Objects\Column('name');
+      $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+      $authorName->setSize(100);
+
+      $authorTable = new \PHPSchemaManager\Objects\Table('author');
+      $authorTable->addColumn($authorId);
+      $authorTable->addColumn($authorName);
+
+      $bookId = new \PHPSchemaManager\Objects\Column('id');
+      $bookId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+
+      $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
+      $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
+      $bookAuthorId->references($authorId);
   }
 }

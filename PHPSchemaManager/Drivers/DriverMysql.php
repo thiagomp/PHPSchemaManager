@@ -383,7 +383,12 @@ class DriverMysql implements DriverInterface
         $sql = "ALTER TABLE $table" . PHP_EOL;
         $sqlParts[] = rtrim($this->alterTableColumns($table), PHP_EOL);
         $sqlParts[] = rtrim($this->alterTableIndexes($table), PHP_EOL);
-        $sqlParts[] = rtrim($this->alterTableForeignKeys($table), PHP_EOL);
+
+        $fkSql = rtrim($this->tableForeignKeysInstruction($table), PHP_EOL);
+        $fkSql = empty($fkSql) ? "" : "ADD $fkSql";
+
+        $sqlParts[] = $fkSql;
+
 
         // normalizes the query to avoid issues
         $sql .= trim(implode("," . PHP_EOL, $sqlParts), "," . PHP_EOL) . PHP_EOL;
@@ -474,18 +479,21 @@ class DriverMysql implements DriverInterface
         return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
     }
 
-    protected function alterTableForeignKeys(\PHPSchemaManager\Objects\Table $table)
+    protected function tableForeignKeysInstruction(\PHPSchemaManager\Objects\Table $table)
     {
         $instruction = '';
         $instructionColumn = '';
         $instructionReferencedColumn = '';
 
-        /* @var $column \PHPSchemaManager\Objects\Column */
         foreach ($table->getColumns() as $column) {
+            /* @var $column \PHPSchemaManager\Objects\Column */
 
             if ($column->shouldCreate() && $column->isFK()) {
                 $instructionColumn .= "$column, ";
                 $instructionReferencedColumn .= $column->getReferencedColumn() . ", ";
+                $deleteAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete());
+                $updateAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate());
+                $referencedTable = $column->getReferencedColumn()->getFather();
             }
 
         }
@@ -493,10 +501,10 @@ class DriverMysql implements DriverInterface
         if (!empty($instructionColumn)) {
             $instructionColumn = rtrim($instructionColumn, ", ");
             $instructionReferencedColumn = rtrim($instructionReferencedColumn, ", ");
-            $instruction = "ADD FOREIGN KEY " . $column->getReference() . " ($instructionColumn)" . PHP_EOL .
-                            "\tREFERENCES " . $column->getFather() . " ($instructionReferencedColumn)" . PHP_EOL .
-                            "\tON DELETE " . $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete()) . PHP_EOL .
-                            "\tON UPDATE " . $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate()) . PHP_EOL;
+            $instruction = "FOREIGN KEY " . $column->getReference() . " ($instructionColumn)" . PHP_EOL .
+                            "\tREFERENCES $referencedTable ($instructionReferencedColumn)" . PHP_EOL .
+                            "\tON DELETE $deleteAction" . PHP_EOL .
+                            "\tON UPDATE $updateAction" . PHP_EOL;
         }
 
         return $instruction;
@@ -541,6 +549,11 @@ class DriverMysql implements DriverInterface
             $col = new DriverMysqlColumn($column);
             $sql .= $col->getDataDefinition() . "," . PHP_EOL;
         }
+
+        // get the instruction to create the foreign keys
+        $fkSql = $this->tableForeignKeysInstruction($table);
+        $fkSql = empty($fkSql) ? "" : "$fkSql," . PHP_EOL;
+        $sql .= $fkSql;
 
         // removes the last comma + EOL from the clause. SQL is not like PHP...
         $sql = substr($sql, 0, (strlen(PHP_EOL)+1)*-1);

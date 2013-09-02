@@ -98,6 +98,11 @@ class Column extends Objects implements ObjectEventsInterface
             $obj->configure();
         }
 
+        // configures a default size for SERIAL types
+        if (self::SERIAL == $type) {
+            $this->setSize(10);
+        }
+
         $this->markForAlter();
     }
 
@@ -329,6 +334,7 @@ class Column extends Objects implements ObjectEventsInterface
 
         $this->reference = new ColumnReference($idxName);;
         $this->referencedColumn = $column;
+        $this->markForAlter();
         return $this->reference;
     }
 
