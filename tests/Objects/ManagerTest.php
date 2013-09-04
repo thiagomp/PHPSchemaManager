@@ -713,8 +713,19 @@ class ManagerTest
       $bookTable->addColumn($bookTitle);
 
       $s = $this->sm->createNewSchema("ModernLibrary");
-      $s->addTable($authorTable, true);
-      $s->addTable($bookTable, true);
+
+      if ($table = $s->hasTable('book')) {
+          $table->drop();
+          $s->flush();
+      }
+
+      if ($table = $s->hasTable('author')) {
+          $table->drop();
+          $s->flush();
+      }
+
+      $s->addTable($authorTable);
+      $s->addTable($bookTable);
 
       $s->flush();
 
