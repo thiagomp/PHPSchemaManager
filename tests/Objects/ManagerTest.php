@@ -732,7 +732,7 @@ class ManagerTest
       $s->drop();
   }
 
-/**
+  /**
    * @expectedException \PHPSchemaManager\Exceptions\ColumnException
    */
   public function testForeignKeyCreationInconsistency() {

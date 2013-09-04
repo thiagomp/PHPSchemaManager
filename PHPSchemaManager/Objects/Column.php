@@ -284,11 +284,7 @@ class Column extends Objects implements ObjectEventsInterface
      */
     public function isNumeric()
     {
-        if (false !== array_search($this->getType(), $this->getNumericTypes())) {
-            return true;
-        }
-
-        return false;
+        return in_array($this->getType(), $this->getNumericTypes());
     }
 
     public function typeStrategy()
@@ -304,19 +300,9 @@ class Column extends Objects implements ObjectEventsInterface
      *
      * @return Boolean
      */
-    public function isStringType()
+    public function isString()
     {
         return in_array($this->getType(), $this->getStringTypes());
-    }
-
-    /**
-     * Check if the column is one of the Numeric types possible for the column
-     *
-     * @return Boolean
-     */
-    public function isNumericType()
-    {
-        return in_array($this->getType(), $this->getNumericTypes());
     }
 
     /**
@@ -330,6 +316,12 @@ class Column extends Objects implements ObjectEventsInterface
     {
         if (empty($idxName)) {
             $idxName = $column->getName() . "IdxFK";
+        }
+
+        // check if the column and the referenced column have the same type
+        if (!$this->equals(($column))) {
+            $msg = "$this column type doesn't match with $column column";
+            throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
         }
 
         $this->reference = new ColumnReference($idxName);;
@@ -394,7 +386,7 @@ class Column extends Objects implements ObjectEventsInterface
 
         // normalizes the default value to have a better presentation when printed
         $defaultValue = $this->getNormalizedDefaultValue();
-        if ($this->isStringType()) {
+        if ($this->isString()) {
             $defaultValue = ", '$defaultValue'";
         }
 
@@ -435,6 +427,23 @@ class Column extends Objects implements ObjectEventsInterface
         $json .= $spaceStrings . "}," . PHP_EOL;
 
         return $json;
+    }
+
+    public function equals(Column $column)
+    {
+        if ($this->getSize() == $column->getSize() && $this->isSigned() == $column->isSigned() ) {
+            if (($this->getType() == \PHPSchemaManager\Objects\Column::SERIAL &&
+                $column->getType() == \PHPSchemaManager\Objects\Column::INT) ||
+                ($column->getType() == \PHPSchemaManager\Objects\Column::SERIAL &&
+                $this->getType() == \PHPSchemaManager\Objects\Column::INT)) {
+                return true;
+            }
+            elseif ($this->getType() == $column->getType()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function __toString()

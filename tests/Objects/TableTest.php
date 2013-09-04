@@ -49,6 +49,8 @@ class TableTest
 
       $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
       $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
+      $bookAuthorId->setSize(10);
+      $bookAuthorId->unsigned();
       $bookAuthorId->references($authorTable->hasColumn('id'));
 
       $this->assertInstanceOf('\PHPSchemaManager\Objects\ColumnReference', $bookAuthorId->getReference());
@@ -73,8 +75,15 @@ class TableTest
       $orderNo->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
       $orderBookId = new \PHPSchemaManager\Objects\Column('bookId');
+      $orderBookId->setType(\PHPSchemaManager\Objects\Column::INT);
+      $orderBookId->setSize(10);
+      $orderBookId->unsigned();
       $orderBookId->references($bookTable->hasColumn('id'));
+
       $orderAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
+      $orderAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
+      $orderAuthorId->setSize(10);
+      $orderAuthorId->unsigned();
       $orderAuthorId->references($bookTable->hasColumn('authorId'));
 
       $this->assertInstanceOf('\PHPSchemaManager\Objects\ColumnReference', $orderBookId->getReference());
@@ -87,6 +96,9 @@ class TableTest
           'When a object is referenced, the deletions should be cascaded by default');
 
       $orderCustomerId = new \PHPSchemaManager\Objects\Column('customerId');
+      $orderCustomerId->setType(\PHPSchemaManager\Objects\Column::INT);
+      $orderCustomerId->setSize(10);
+      $orderCustomerId->unsigned();
       $orderCustomerId->references($customerTable->hasColumn('id'))->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
       $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::NOACTION,
           $orderCustomerId->getReference()->getActionOnDelete(),
