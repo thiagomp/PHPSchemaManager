@@ -332,6 +332,7 @@ class Column extends Objects implements ObjectEventsInterface
 
     /**
      * Check if the column if a foreign key of another table
+     * @return boolean
      */
     public function isFK()
     {
@@ -341,7 +342,7 @@ class Column extends Objects implements ObjectEventsInterface
     /**
      * Get the referenced column by this FK
      *
-     * @return \PhpSchemaManager\Objects\Column|null
+     * @return \PhpSchemaManager\Objects\Column
      */
     public function getReferencedColumn()
     {

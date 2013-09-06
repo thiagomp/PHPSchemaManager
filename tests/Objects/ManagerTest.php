@@ -729,6 +729,23 @@ class ManagerTest
 
       $s->flush();
 
+      // check if the fk was marked as synced
+      $this->assertTrue($s->hasTable('book')->hasColumn('authorId')->isSynced());
+
+      // creates a new manager to for the library to read the data from the database
+      $ma = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+      $m = $ma->hasSchema('ModernLibrary');
+
+      $this->assertTrue($m->hasTable('book')->hasColumn('authorId')->isFK(),
+          "The authorId column is expected to be a FK");
+
+      $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
+          $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn(), "Expected to get the Column referenced");
+
+      $this->assertEquals('author',
+          $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn()->getFather()->getName(),
+          "The referenced column is expected to belong to the 'author' table");
+
       $s->drop();
   }
 
