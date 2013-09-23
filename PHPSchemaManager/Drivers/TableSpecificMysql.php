@@ -43,27 +43,27 @@ class TableSpecificMysql extends TableSpecific
 
     public function isMyIsam()
     {
-        return $this->engine == self::MYISAM;
+        return $this->getEngine() == self::MYISAM;
     }
 
     public function isInnoDb()
     {
-        return $this->engine == self::INNODB;
+        return $this->getEngine() == self::INNODB;
     }
 
     public function isMemory()
     {
-        return $this->engine == self::MEMORY;
+        return $this->getEngine() == self::MEMORY;
     }
 
     public function isCsv()
     {
-        return $this->engine == self::CSV;
+        return $this->getEngine() == self::CSV;
     }
 
     public function isBlackhole()
     {
-        return $this->engine == self::BLACKHOLE;
+        return $this->getEngine() == self::BLACKHOLE;
     }
 
     protected function setEngine($engineName = self::MYISAM)
