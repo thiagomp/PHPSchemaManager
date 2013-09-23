@@ -681,73 +681,110 @@ class ManagerTest
     $this->assertFalse($m->hasSchema('testInstitution'), "Schema 'testInstitution' should be deleted by now");
   }
 
-  public function testForeignKeyCreateTable() {
+    public function testTableEngine() {
+        $authorId = new \PHPSchemaManager\Objects\Column('id');
+        $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-      $authorId = new \PHPSchemaManager\Objects\Column('id');
-      $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+        $authorName = new \PHPSchemaManager\Objects\Column('name');
+        $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+        $authorName->setSize(100);
 
-      $authorName = new \PHPSchemaManager\Objects\Column('name');
-      $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
-      $authorName->setSize(100);
+        $authorTable = new \PHPSchemaManager\Objects\Table('author');
+        $authorTable->addColumn($authorId);
+        $authorTable->addColumn($authorName);
 
-      $authorTable = new \PHPSchemaManager\Objects\Table('author');
-      $authorTable->addColumn($authorId);
-      $authorTable->addColumn($authorName);
+        $specifics = new \PHPSchemaManager\Drivers\TableSpecificMysql();
+        $specifics->markAsInnoDb();
 
-      $bookId = new \PHPSchemaManager\Objects\Column('id');
-      $bookId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+        $authorTable->addSpecificConfiguration($specifics);
 
-      $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
-      $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
-      $bookAuthorId->setSize(10);
-      $bookAuthorId->unsigned();
-      $bookAuthorId->references($authorId);
+        $s = $this->sm->createNewSchema("advancedTest");
 
-      $bookTitle = new \PHPSchemaManager\Objects\Column('title');
-      $bookTitle->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
-      $bookTitle->setSize(250);
+        if ($table = $s->hasTable('author')) {
+            $table->drop();
+            $s->flush();
+        }
 
-      $bookTable = new \PHPSchemaManager\Objects\Table('book');
-      $bookTable->addColumn($bookId);
-      $bookTable->addColumn($bookAuthorId);
-      $bookTable->addColumn($bookTitle);
+        $s->addTable($authorTable);
 
-      $s = $this->sm->createNewSchema("ModernLibrary");
+        $s->flush();
 
-      if ($table = $s->hasTable('book')) {
-          $table->drop();
-          $s->flush();
-      }
+        $confs = $s->hasTable('author')->getSpecificsConfiguration();
+        $mts = $confs[0];
 
-      if ($table = $s->hasTable('author')) {
-          $table->drop();
-          $s->flush();
-      }
+        $this->assertTrue($mts->isInnoDb());
 
-      $s->addTable($authorTable);
-      $s->addTable($bookTable);
+        $s->drop();
+        $s->flush();
+    }
 
-      $s->flush();
+    public function testForeignKeyCreateTable() {
 
-      // check if the fk was marked as synced
-      $this->assertTrue($s->hasTable('book')->hasColumn('authorId')->isSynced());
+        $authorId = new \PHPSchemaManager\Objects\Column('id');
+        $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-      // creates a new manager to for the library to read the data from the database
-      $ma = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
-      $m = $ma->hasSchema('ModernLibrary');
+        $authorName = new \PHPSchemaManager\Objects\Column('name');
+        $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+        $authorName->setSize(100);
 
-      $this->assertTrue($m->hasTable('book')->hasColumn('authorId')->isFK(),
-          "The authorId column is expected to be a FK");
+        $authorTable = new \PHPSchemaManager\Objects\Table('author');
+        $authorTable->addColumn($authorId);
+        $authorTable->addColumn($authorName);
 
-      $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
-          $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn(), "Expected to get the Column referenced");
+        $bookId = new \PHPSchemaManager\Objects\Column('id');
+        $bookId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-      $this->assertEquals('author',
-          $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn()->getFather()->getName(),
-          "The referenced column is expected to belong to the 'author' table");
+        $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
+        $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
+        $bookAuthorId->setSize(10);
+        $bookAuthorId->unsigned();
+        $bookAuthorId->references($authorId);
 
-      $s->drop();
-  }
+        $bookTitle = new \PHPSchemaManager\Objects\Column('title');
+        $bookTitle->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+        $bookTitle->setSize(250);
+
+        $bookTable = new \PHPSchemaManager\Objects\Table('book');
+        $bookTable->addColumn($bookId);
+        $bookTable->addColumn($bookAuthorId);
+        $bookTable->addColumn($bookTitle);
+
+        $s = $this->sm->hasSchema("ModernLibrary");
+
+        if ($table = $s->hasTable('book')) {
+            $table->drop();
+            $s->flush();
+        }
+
+        if ($table = $s->hasTable('author')) {
+            $table->drop();
+            $s->flush();
+        }
+
+        $s->addTable($authorTable);
+        $s->addTable($bookTable);
+
+        $s->flush();
+
+        // check if the fk was marked as synced
+        $this->assertTrue($s->hasTable('book')->hasColumn('authorId')->isSynced());
+
+        // creates a new manager to for the library to read the data from the database
+        $ma = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+        $m = $ma->hasSchema('ModernLibrary');
+
+        $this->assertTrue($m->hasTable('book')->hasColumn('authorId')->isFK(),
+            "The authorId column is expected to be a FK");
+
+        $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
+            $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn(), "Expected to get the Column referenced");
+
+        $this->assertEquals('author',
+            $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn()->getFather()->getName(),
+            "The referenced column is expected to belong to the 'author' table");
+
+        $s->drop();
+    }
 
   /**
    * @expectedException \PHPSchemaManager\Exceptions\ColumnException

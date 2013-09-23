@@ -110,4 +110,25 @@ class TableTest
       $orderTable->addColumn($orderAuthorId);
       $orderTable->addColumn($orderCustomerId);
   }
+
+    public function testTableEngine() {
+        $authorId = new \PHPSchemaManager\Objects\Column('id');
+        $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+
+        $authorName = new \PHPSchemaManager\Objects\Column('name');
+        $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+        $authorName->setSize(100);
+
+        $authorTable = new \PHPSchemaManager\Objects\Table('author');
+        $authorTable->addColumn($authorId);
+        $authorTable->addColumn($authorName);
+
+        $specifics = new \PHPSchemaManager\Drivers\TableSpecificMysql();
+        $specifics->markAsInnoDb();
+
+        $authorTable->addSpecificConfiguration($specifics);
+
+        $this->assertEquals(1, count($authorTable->getSpecificsConfiguration()));
+        $this->assertTrue($specifics->isInnoDb());
+    }
 }

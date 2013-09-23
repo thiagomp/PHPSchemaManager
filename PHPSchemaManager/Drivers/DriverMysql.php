@@ -114,6 +114,9 @@ class DriverMysql implements DriverInterface
             // get the indexes
             $this->getIndexes($table);
 
+            // get table specifics
+            $this->getSpecifics($table);
+
             $table->persisted();
 
             $schema->addTable($table);
@@ -377,6 +380,51 @@ class DriverMysql implements DriverInterface
         $this->selectDb($currentSelectedDb);
     }
 
+    public function getSpecifics(\PHPSchemaManager\Objects\Table $table)
+    {
+        // array to hold all the specifics for this table - in the future there will more than only the engine
+        $conf = array();
+
+        // get info from the table
+        $sql = "SHOW TABLE STATUS WHERE NAME = '$table'";
+        $res = $this->dbQuery($sql);
+
+        while($row = mysql_fetch_assoc($res)) {
+            if ('Engine' == key($row)) {
+                $conf['engine'] = current($row);
+                break;
+            }
+        }
+
+        if (!empty($conf)) {
+            $specifics = new TableSpecificMysql();
+
+            switch ($conf['engine']) {
+                case TableSpecificMysql::MYISAM:
+                    $specifics->markAsMyIsam();
+                    break;
+
+                case TableSpecificMysql::INNODB:
+                    $specifics->markAsInnoDb();
+                    break;
+
+                case TableSpecificMysql::CSV:
+                    $specifics->markAsCsv();
+                    break;
+
+                case TableSpecificMysql::MEMORY:
+                    $specifics->markAsMemory();
+                    break;
+
+                case TableSpecificMysql::BLACKHOLE:
+                    $specifics->markAsBlackhole();
+                    break;
+            }
+
+            $table->addSpecificConfiguration($specifics);
+        }
+    }
+
     protected function alterTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
@@ -560,6 +608,21 @@ class DriverMysql implements DriverInterface
 
         $sql .= PHP_EOL . ")";
 
+        // check if there is any specific configuration
+        if ($specifics = $this->getMysqlTableSpecifics($table)) {
+            if ($specifics->isInnoDb()) {
+                $sql .= " ENGINE=InnoDb";
+            }elseif($specifics->isMyIsam()) {
+                $sql .= " ENGINE=MYISAM";
+            }elseif($specifics->isCsv()) {
+                $sql .= " ENGINE=CSV";
+            }elseif($specifics->isMemory()) {
+                $sql .= " ENGINE=MEMORY";
+            }elseif($specifics->isBlackhole()) {
+                $sql .= " ENGINE=BLACKHOLE";
+            }
+        }
+
         $this->dbQuery($sql);
     }
 
@@ -584,5 +647,16 @@ class DriverMysql implements DriverInterface
         $this->dbQuery($sql);
         $schema->markAsDeleted();
         $schema->destroy();
+    }
+
+    protected function getMysqlTableSpecifics(\PHPSchemaManager\Objects\Table $table)
+    {
+        foreach($table->getSpecificsConfiguration() as $specific) {
+            if ($specific instanceof \PHPSchemaManager\Objects\TableSpecificMysql) {
+                return $specific;
+            }
+        }
+
+        return false;
     }
 }
