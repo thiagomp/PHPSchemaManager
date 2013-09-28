@@ -121,6 +121,9 @@ class DriverMysql implements DriverInterface
 
             $schema->addTable($table);
         }
+
+        // get the foreign keys from all tables
+        $this->getForeignKeys($schema);
     }
 
     public function dbQuery($sql)
@@ -272,7 +275,7 @@ class DriverMysql implements DriverInterface
 
             // to get the type we have to first separate the type name from its size, if any.
             $matches = '';
-            $regex = "/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)/";
+            $regex = "/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)( ([a-zA-Z]+))?/";
             preg_match($regex, strtolower($row['Type']), $matches);
 
             if (empty($matches[0])) {
@@ -307,8 +310,10 @@ class DriverMysql implements DriverInterface
             }
 
             // check if there is the unsigned instruction
-            if (!empty($matches[7]) && 'unsigned' == strtolower($matches[7])) {
+            if (in_array('unsigned', $matches)) {
                 $column->unsigned();
+            } else {
+                $column->signed();
             }
 
             // check if the column can receive null values, by default this library assumes it can't
@@ -658,5 +663,32 @@ class DriverMysql implements DriverInterface
         }
 
         return false;
+    }
+
+    protected function getForeignKeys(\PHPSchemaManager\Objects\Schema $schema)
+    {
+        foreach($schema->getTables() as $table) {
+            /** @var $table \PHPSchemaManager\Objects\Table */
+
+            foreach($table->getColumns() as $column) {
+                /** @var $column \PHPSchemaManager\Objects\Column */
+
+                $sql = "SELECT column_name AS fk_name, referenced_table_name, referenced_column_name" . PHP_EOL .
+                        "FROM information_schema.key_column_usage" . PHP_EOL .
+                        "WHERE table_name = '{$table}' AND column_name = '{$column}'" . PHP_EOL .
+                        "  AND referenced_table_name IS NOT NULL AND table_schema = '{$schema}'";
+
+                $res = $this->dbQuery($sql);
+
+                while($row = mysql_fetch_assoc($res)) {
+                    $referencedTable = $schema->hasTable($row['referenced_table_name'])
+                        ->hasColumn($row['referenced_column_name']);
+
+                    if (!empty($referencedTable)) {
+                        $column->references($referencedTable);
+                    }
+                }
+            }
+        }
     }
 }
