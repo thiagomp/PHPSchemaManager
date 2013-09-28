@@ -321,6 +321,8 @@ class Column extends Objects implements ObjectEventsInterface
         // check if the column and the referenced column have the same type
         if (!$this->equals(($column))) {
             $msg = "$this column type doesn't match with $column column";
+            $msg .= PHP_EOL . $this->printTxt() . PHP_EOL;
+            $msg .= $column->printTxt();
             throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
         }
 
@@ -387,17 +389,33 @@ class Column extends Objects implements ObjectEventsInterface
 
         // normalizes the default value to have a better presentation when printed
         $defaultValue = $this->getNormalizedDefaultValue();
-        if ($this->isString()) {
-            $defaultValue = ", '$defaultValue'";
+        if (!empty($defaultValue)) {
+            if ($this->isString()) {
+                $defaultValue = ", '$defaultValue'";
+            } else {
+                $defaultValue = ", $defaultValue";
+            }
+        } else {
+            $defaultValue = ", _";
         }
 
+        // put together the text to inform the foreign keys
         $fkInfo = ($this->isFK() ? ", FK(table:" . $this->getReferencedColumn()->getFather() . ", column:"
                     . $this->getReferencedColumn() . ", on delete:" . $this->getReference()->getActionOnDelete() .
                     ", on update:" . $this->getReference()->getActionOnUpdate() . ") " : ' ');
 
+        // check if it is a numeric type and show if the field is signed or not
+        $signed = ', _';
+        if ($this->isSigned()) {
+            $signed = ", signed";
+        } elseif($this->isNumeric()) {
+            $signed = ", unsigned";
+        }
+
         return "$this: {$this->getType()}({$this->getSize()}), " .
                 ($this->isNullAllowed() ? "NULL" : "NOT NULL") .
                 $defaultValue .
+                $signed .
                 $fkInfo .
                 "[{$this->getAction()}]";
     }
@@ -430,6 +448,13 @@ class Column extends Objects implements ObjectEventsInterface
         return $json;
     }
 
+    /**
+     * Checks if a column is equal to each other.
+     * It will be considered equal in case type, size and signed are the same
+     *
+     * @param \PHPSchemaManager\Objects\Column $column
+     * @return boolean1
+     */
     public function equals(Column $column)
     {
         if ($this->getSize() == $column->getSize() && $this->isSigned() == $column->isSigned() ) {
