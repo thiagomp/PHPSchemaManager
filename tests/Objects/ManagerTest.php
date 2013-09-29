@@ -749,41 +749,80 @@ class ManagerTest
         $bookTable->addColumn($bookAuthorId);
         $bookTable->addColumn($bookTitle);
 
-        $s = $this->sm->hasSchema("ModernLibrary");
+        $orderNo = new \PHPSchemaManager\Objects\Column('id');
+        $orderNo->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-        if ($table = $s->hasTable('book')) {
-            $table->drop();
+        $orderBookId = new \PHPSchemaManager\Objects\Column('bookId');
+        $orderBookId->setType(\PHPSchemaManager\Objects\Column::INT);
+        $orderBookId->setSize(10);
+        $orderBookId->unsigned();
+        $orderBookId->references($bookTable->hasColumn('id'));
+
+        $orderAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
+        $orderAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
+        $orderAuthorId->setSize(10);
+        $orderAuthorId->unsigned();
+        $orderAuthorId->references($authorTable->hasColumn('id'));
+
+        $orderTable = new \PHPSchemaManager\Objects\Table('order');
+        $orderTable->addColumn($orderNo);
+        $orderTable->addColumn($orderBookId);
+        $orderTable->addColumn($orderAuthorId);
+        //$orderTable->addColumn($orderCustomerId);
+
+        // make sure all tables on this database doesn't exists
+        if ($s = $this->sm->hasSchema("ModernLibrary")) {
+            $s->drop();
             $s->flush();
         }
 
-        if ($table = $s->hasTable('author')) {
-            $table->drop();
-            $s->flush();
-        }
+        $s = new \PHPSchemaManager\Objects\Schema('ModernLibrary');
+        $this->sm->addSchema($s);
 
         $s->addTable($authorTable);
         $s->addTable($bookTable);
+        $s->addTable($orderTable);
 
         $s->flush();
 
-        // check if the fk was marked as synced
+        // check if the fks were marked as synced
         $this->assertTrue($s->hasTable('book')->hasColumn('authorId')->isSynced());
+        $this->assertTrue($s->hasTable('order')->hasColumn('authorId')->isSynced());
+        $this->assertTrue($s->hasTable('order')->hasColumn('bookId')->isSynced());
 
         // creates a new manager to for the library to read the data from the database
         $ma = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
         $m = $ma->hasSchema('ModernLibrary');
 
+        // check if the expected columns are recognized as FK
         $this->assertTrue($m->hasTable('book')->hasColumn('authorId')->isFK(),
-            "The authorId column is expected to be a FK");
+            "The authorId column in the book table is expected to be a FK");
+        $this->assertTrue($m->hasTable('order')->hasColumn('authorId')->isFK(),
+            "The authorId column in the order table is expected to be a FK");
+        $this->assertTrue($m->hasTable('order')->hasColumn('bookId')->isFK(),
+            "The authorId column in the order table is expected to be a FK");
 
+        // check if the correct object is returned when requesting the referenced column
         $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
-            $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn(), "Expected to get the Column referenced");
+            $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn(),
+            "Expected to get the referenced Column");
+        $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
+            $m->hasTable('order')->hasColumn('authorId')->getReferencedColumn(),
+            "Expected to get the referenced Column");
+        $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
+            $m->hasTable('order')->hasColumn('bookId')->getReferencedColumn(),
+            "Expected to get the referenced Column");
 
+        // check if the referenced object belongs to the expected table
         $this->assertEquals('author',
             $m->hasTable('book')->hasColumn('authorId')->getReferencedColumn()->getFather()->getName(),
             "The referenced column is expected to belong to the 'author' table");
-
-        $s->drop();
+        $this->assertEquals('author',
+            $m->hasTable('order')->hasColumn('authorId')->getReferencedColumn()->getFather()->getName(),
+            "The referenced column is expected to belong to the 'author' table");
+        $this->assertEquals('book',
+            $m->hasTable('order')->hasColumn('bookId')->getReferencedColumn()->getFather()->getName(),
+            "The referenced column is expected to belong to the 'book' table");
     }
 
   /**
