@@ -146,7 +146,7 @@ class DriverMysql implements DriverInterface
 
     public function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table)
     {
-        $sql = "SHOW CREATE TABLE $table";
+        $sql = "SHOW CREATE TABLE `{$table}`";
         $result = $this->dbQuery($sql);
         $row = $this->dbFetchArray($result);
         return $row["Create Table"];
@@ -187,7 +187,7 @@ class DriverMysql implements DriverInterface
                 // nothing to do
                 break;
             default:
-                $msg = "Action {$table->getAction()} is not implemented by this library";
+                $msg = "Action {$schema->getAction()} is not implemented by this library";
                 throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
 
@@ -264,7 +264,7 @@ class DriverMysql implements DriverInterface
     {
 
         // describe the tables from the database
-        $sql = "DESC $table";
+        $sql = "DESC `{$table}`";
         $resCol = $this->dbQuery($sql);
 
         while ($row = mysql_fetch_assoc($resCol)) {
@@ -433,7 +433,7 @@ class DriverMysql implements DriverInterface
     protected function alterTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
-        $sql = "ALTER TABLE $table" . PHP_EOL;
+        $sql = "ALTER TABLE `{$table}`" . PHP_EOL;
         $sqlParts[] = rtrim($this->alterTableColumns($table), PHP_EOL);
         $sqlParts[] = rtrim($this->alterTableIndexes($table), PHP_EOL);
 
@@ -534,33 +534,44 @@ class DriverMysql implements DriverInterface
 
     protected function tableForeignKeysInstruction(\PHPSchemaManager\Objects\Table $table)
     {
-        $instruction = '';
-        $instructionColumn = '';
-        $instructionReferencedColumn = '';
+        $instruction = array();
+        $fkInstruction = '';
 
         foreach ($table->getColumns() as $column) {
-            /* @var $column \PHPSchemaManager\Objects\Column */
+            /** @var $column \PHPSchemaManager\Objects\Column */
 
             if ($column->shouldCreate() && $column->isFK()) {
-                $instructionColumn .= "$column, ";
-                $instructionReferencedColumn .= $column->getReferencedColumn() . ", ";
-                $deleteAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete());
-                $updateAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate());
+                /** @var $referencedTable \PHPSchemaManager\Objects\Column */
                 $referencedTable = $column->getReferencedColumn()->getFather();
+                $index = $referencedTable->getName();
+
+                if (empty($instruction[$index])) {
+                    $instruction[$index]['instructionColumn'] = "";
+                    $instruction[$index]['instructionReferencedColumn'] = "";
+                }
+
+                $instruction[$index]['instructionColumn'] .= "$column, ";
+                $instruction[$index]['instructionReferencedColumn'] .= $column->getReferencedColumn() . ", ";
+                $instruction[$index]['deleteAction'] = $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete());
+                $instruction[$index]['updateAction'] = $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate());
             }
 
         }
 
-        if (!empty($instructionColumn)) {
-            $instructionColumn = rtrim($instructionColumn, ", ");
-            $instructionReferencedColumn = rtrim($instructionReferencedColumn, ", ");
-            $instruction = "FOREIGN KEY " . $column->getReference() . " ($instructionColumn)" . PHP_EOL .
+        foreach($instruction as $referencedTable => $item) {
+            $instructionColumn = rtrim($item['instructionColumn'], ", ");
+            $instructionReferencedColumn = rtrim($item['instructionReferencedColumn'], ", ");
+            $fkInstruction .= "FOREIGN KEY ($instructionColumn)" . PHP_EOL .
                             "\tREFERENCES $referencedTable ($instructionReferencedColumn)" . PHP_EOL .
-                            "\tON DELETE $deleteAction" . PHP_EOL .
-                            "\tON UPDATE $updateAction" . PHP_EOL;
+                            "\tON DELETE {$item['deleteAction']}" . PHP_EOL .
+                            "\tON UPDATE {$item['updateAction']}, " . PHP_EOL;
         }
 
-        return $instruction;
+        if (!empty($fkInstruction)) {
+            $fkInstruction = substr($fkInstruction, 0, -1 * (strlen(", " . PHP_EOL)));
+        }
+
+        return $fkInstruction;
     }
 
     protected function getReferenceOptionDescription($referenceOption = null)
@@ -587,7 +598,7 @@ class DriverMysql implements DriverInterface
     protected function deleteTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
-        $sql = "DROP TABLE $table";
+        $sql = "DROP TABLE `{$table}`";
         $this->dbQuery($sql);
         $table->markAsDeleted();
         $table->destroy();
@@ -596,7 +607,7 @@ class DriverMysql implements DriverInterface
     protected function createTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
-        $sql = "CREATE TABLE $table (" . PHP_EOL;
+        $sql = "CREATE TABLE `{$table}` (" . PHP_EOL;
 
         foreach ($table->getColumns() as $column) {
             $col = new DriverMysqlColumn($column);
@@ -638,7 +649,7 @@ class DriverMysql implements DriverInterface
      */
     protected function createDatabase($dbName)
     {
-        $sql = "CREATE DATABASE $dbName";
+        $sql = "CREATE DATABASE `{$dbName}`";
         try {
             $this->dbQuery($sql);
         } catch (\PHPSchemaManager\Exceptions\MysqlException $e) {
@@ -648,7 +659,7 @@ class DriverMysql implements DriverInterface
 
     protected function dropDatabase(\PHPSchemaManager\Objects\Schema $schema)
     {
-        $sql = "DROP DATABASE $schema";
+        $sql = "DROP DATABASE `{$schema}`";
         $this->dbQuery($sql);
         $schema->markAsDeleted();
         $schema->destroy();
