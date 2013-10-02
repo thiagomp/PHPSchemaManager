@@ -10,7 +10,6 @@ class Manager extends Objects implements FatherInterface
     protected $firstFetchExecuted = false;
     protected $connection;
     protected $driver;
-    protected $goToDatabase = true;
     protected $fetchAllowed = true;
 
     const DEFULTCONNECTION = 'default';
@@ -373,24 +372,22 @@ class Manager extends Objects implements FatherInterface
             return false;
         }
 
-        if ($this->goToDatabase) {
-            $conn = $this->getConnection();
+        $conn = $this->getConnection();
 
-            //gets all schemas found in this connection
-            foreach ($conn->driver->getSchemas() as $schema) {
-                /* @var $schema \PHPSchemaManager\Objects\Schema */
-                $this->forbidFetch();
-                $this->addSchema($schema);
-                $this->allowFetch();
-                $schema->setFather($this);
+        //gets all schemas found in this connection
+        foreach ($conn->driver->getSchemas() as $schema) {
+            /* @var $schema \PHPSchemaManager\Objects\Schema */
+            $this->forbidFetch();
+            $this->addSchema($schema);
+            $this->allowFetch();
+            $schema->setFather($this);
 
-                if (!$schema->shouldBeIgnored()) {
-                      $conn->driver->getTables($schema);
-                }
+            if (!$schema->shouldBeIgnored()) {
+                  $conn->driver->getTables($schema);
             }
-
-            $this->goToDatabase = false;
         }
+
+        $this->forbidFetch();
     }
 
     /**
