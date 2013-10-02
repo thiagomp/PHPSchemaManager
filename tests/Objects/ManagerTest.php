@@ -749,6 +749,12 @@ class ManagerTest
         $bookTable->addColumn($bookAuthorId);
         $bookTable->addColumn($bookTitle);
 
+        $customerId = new \PHPSchemaManager\Objects\Column('id');
+        $customerId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+
+        $customerTable = new \PHPSchemaManager\Objects\Table('customer');
+        $customerTable->addColumn($customerId);
+
         $orderNo = new \PHPSchemaManager\Objects\Column('id');
         $orderNo->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
@@ -764,11 +770,17 @@ class ManagerTest
         $orderAuthorId->unsigned();
         $orderAuthorId->references($authorTable->hasColumn('id'));
 
+        $orderCustomerId = new \PHPSchemaManager\Objects\Column('customerId');
+        $orderCustomerId->setType(\PHPSchemaManager\Objects\Column::INT);
+        $orderCustomerId->setSize(10);
+        $orderCustomerId->unsigned();
+        $orderCustomerId->references($customerTable->hasColumn('id'))->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+
         $orderTable = new \PHPSchemaManager\Objects\Table('order');
         $orderTable->addColumn($orderNo);
         $orderTable->addColumn($orderBookId);
         $orderTable->addColumn($orderAuthorId);
-        //$orderTable->addColumn($orderCustomerId);
+        $orderTable->addColumn($orderCustomerId);
 
         // make sure all tables on this database doesn't exists
         if ($s = $this->sm->hasSchema("ModernLibrary")) {
@@ -781,6 +793,7 @@ class ManagerTest
 
         $s->addTable($authorTable);
         $s->addTable($bookTable);
+        $s->addTable($customerTable);
         $s->addTable($orderTable);
 
         $s->flush();
@@ -800,7 +813,9 @@ class ManagerTest
         $this->assertTrue($m->hasTable('order')->hasColumn('authorId')->isFK(),
             "The authorId column in the order table is expected to be a FK");
         $this->assertTrue($m->hasTable('order')->hasColumn('bookId')->isFK(),
-            "The authorId column in the order table is expected to be a FK");
+            "The bookId column in the order table is expected to be a FK");
+        $this->assertTrue($m->hasTable('order')->hasColumn('customerId')->isFK(),
+            "The customerId column in the order table is expected to be a FK");
 
         // check if the correct object is returned when requesting the referenced column
         $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
@@ -811,6 +826,9 @@ class ManagerTest
             "Expected to get the referenced Column");
         $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
             $m->hasTable('order')->hasColumn('bookId')->getReferencedColumn(),
+            "Expected to get the referenced Column");
+        $this->assertInstanceOf('\PHPSchemaManager\Objects\Column',
+            $m->hasTable('order')->hasColumn('customerId')->getReferencedColumn(),
             "Expected to get the referenced Column");
 
         // check if the referenced object belongs to the expected table
@@ -823,6 +841,23 @@ class ManagerTest
         $this->assertEquals('book',
             $m->hasTable('order')->hasColumn('bookId')->getReferencedColumn()->getFather()->getName(),
             "The referenced column is expected to belong to the 'book' table");
+        $this->assertEquals('customer',
+            $m->hasTable('order')->hasColumn('customerId')->getReferencedColumn()->getFather()->getName(),
+            "The referenced column is expected to belong to the 'order' table");
+
+        // check if the instructions on delete is correct
+        $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::NOACTION,
+            $m->hasTable('order')->hasColumn('customerId')->getReference()->getActionOnDelete(),
+            'the customerId field is expected to ignore when a deletion is onde');
+        $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
+            $m->hasTable('order')->hasColumn('bookId')->getReference()->getActionOnDelete(),
+            'the bookId field is expected to ignore when a deletion is onde');
+        $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
+            $m->hasTable('order')->hasColumn('authorId')->getReference()->getActionOnDelete(),
+            'the bookId field is expected to ignore when a deletion is onde');
+        $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
+            $m->hasTable('book')->hasColumn('authorId')->getReference()->getActionOnDelete(),
+            'the authorId field is expected to ignore when a deletion is onde');
     }
 
   /**
