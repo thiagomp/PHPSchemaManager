@@ -679,62 +679,58 @@ class DriverMysql implements DriverInterface
     protected function getForeignKeys(\PHPSchemaManager\Objects\Schema $schema)
     {
 
-        $sql = "SELECT kcu.column_name AS fk_name, kcu.referenced_table_name, " . PHP_EOL .
-                "  kcu.referenced_column_name, rc.update_rule, rc.delete_rule" . PHP_EOL .
+        $sql = "SELECT kcu.table_name AS origin_table, kcu.column_name AS fk_name, " . PHP_EOL .
+                "  kcu.referenced_table_name, kcu.referenced_column_name, rc.update_rule, rc.delete_rule" . PHP_EOL .
                 "FROM information_schema.key_column_usage AS kcu" . PHP_EOL .
                 "INNER JOIN information_schema.referential_constraints AS rc" . PHP_EOL .
                 "  ON rc.table_name = kcu.table_name AND rc.constraint_name = kcu.constraint_name" . PHP_EOL .
                 "WHERE kcu.referenced_table_name IS NOT NULL AND kcu.table_schema = '{$schema}'";
         $res = $this->dbQuery($sql);
 
-        foreach($schema->getTables() as $table) {
-            /** @var $table \PHPSchemaManager\Objects\Table */
+        while($row = mysql_fetch_assoc($res)) {
+            $originTable = $schema->hasTable($row['origin_table']);
+            $fkColumn = $originTable->hasColumn($row['fk_name']);
+            if (!empty($fkColumn)) {
+                $referencedTable = $schema->hasTable($row['referenced_table_name'])
+                    ->hasColumn($row['referenced_column_name']);
+                if (!empty($referencedTable)) {
+                    $reference = $fkColumn->references($referencedTable);
 
-            foreach($table->getColumns() as $column) {
-                /** @var $column \PHPSchemaManager\Objects\Column */
-
-                while($row = mysql_fetch_assoc($res)) {
-                    $referencedTable = $schema->hasTable($row['referenced_table_name'])
-                        ->hasColumn($row['referenced_column_name']);
-
-                    if (!empty($referencedTable)) {
-                        $reference = $column->references($referencedTable);
-
-                        // check wich cascade rule should be associated to this column
-                        switch ($row['update_rule']) {
-                            case "CASCADE":
-                                $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
-                                break;
-                            case "NO ACTION":
-                                $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
-                                break;
-                            case "RESTRICT":
-                                $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::RESTRICT);
-                                break;
-                            case "SETNULL":
-                                $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::SETNULL);
-                                break;
-                        }
-
-                        // check wich cascade rule should be associated to this column
-                        switch ($row['delete_rule']) {
-                            case "CASCADE":
-                                $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
-                                break;
-                            case "NO ACTION":
-                                $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
-                                break;
-                            case "RESTRICT":
-                                $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::RESTRICT);
-                                break;
-                            case "SETNULL":
-                                $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::SETNULL);
-                                break;
-                        }
-
-                        // mark the table as persisted
-                        $table->persisted();
+                    // check wich cascade rule should be associated to this column
+                    switch ($row['update_rule']) {
+                        case "CASCADE":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
+                            break;
+                        case "NO ACTION":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+                            break;
+                        case "RESTRICT":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::RESTRICT);
+                            break;
+                        case "SETNULL":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::SETNULL);
+                            break;
                     }
+
+                    // check wich cascade rule should be associated to this column
+                    switch ($row['delete_rule']) {
+                        case "CASCADE":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
+                            break;
+                        case "NO ACTION":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+                            break;
+                        case "RESTRICT":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::RESTRICT);
+                            break;
+                        case "SETNULL":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::SETNULL);
+                            break;
+                    }
+
+                    // mark the table as persisted
+                    $originTable->persisted();
+
                 }
             }
         }
