@@ -25,48 +25,43 @@ if (!$schema = $manager->hasSchema('PHPSchemaManager')) {
   $manager->addSchema($schema);
 }
 
-// Check if the table exists in the database
-// if not, show an error
-if (!$bookTable = $schema->hasTable('book')) {
-  echo "In order to execute this example, the table 'book' must exist.\n";
-  echo "You can create it executing the add_table_to_the_schema.php script.";
-  exit(1);
-}
+// Creates a supplier table
+$supplierId = new \PHPSchemaManager\Objects\Column('id');
+$supplierId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-// Creates an author table
-$authorId = new \PHPSchemaManager\Objects\Column('id');
-$authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+$supplierName = new \PHPSchemaManager\Objects\Column('name');
+$supplierName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+$supplierName->setSize(100);
 
-$authorName = new \PHPSchemaManager\Objects\Column('name');
-$authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
-$authorName->setSize(100);
+$supplierTable = new \PHPSchemaManager\Objects\Table('supplier');
+$supplierTable->addColumn($supplierId);
+$supplierTable->addColumn($supplierName);
 
-$authorTable = new \PHPSchemaManager\Objects\Table('author');
-$authorTable->addColumn($authorId);
-$authorTable->addColumn($authorName);
+// Prints the supplier table
+echo "Supplier table created:" . PHP_EOL;
+echo $supplierTable->printTxt();
 
-// Prints the author table
-echo "Author table created" . PHP_EOL;
-$authorTable->printTxt();
+// Creates the id field for the tire
+$tireId = new \PHPSchemaManager\Objects\Column('id');
+$tireId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-// Check if the authorId column exists in the book table
-if ($bookTable->hasColumn('authorId')) {
-    // if exists, just drop it, because it will be easier to understand the example about creating a new reference
-    $bookTable->hasColumn('authorId')->drop();
-}
+// Adds a supplier field in the tire table
+$tireSupplierId = new \PHPSchemaManager\Objects\Column('supplierId');
+$tireSupplierId->references($supplierId);
 
-// Adds an author field in the book table
-$bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
-$bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
-$bookAuthorId->references($authorId);
-$bookTable->addColumn($bookAuthorId);
 
-// Shows book table with the FK
-echo $bookTable->printTxt();
+$tireTable = new \PHPSchemaManager\Objects\Table('tire');
+$tireTable->addColumn($tireId);
+$tireTable->addColumn($tireSupplierId);
+
+
+// Shows tire table with the FK
+echo "Tire table created with FK:" . PHP_EOL;
+echo $tireTable->printTxt();
 
 // Persist the changes to the book table
 $schema->flush();
-/*
+
 // Creates a customer table
 $customerId = new \PHPSchemaManager\Objects\Column('id');
 $customerId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
@@ -75,36 +70,36 @@ $customerTable = new \PHPSchemaManager\Objects\Table('customer');
 $customerTable->addColumn($customerId);
 
 // Prints customer table
-echo "Customer table created" . PHP_EOL;
-$customerTable->printTxt();
+echo "Customer table created: " . PHP_EOL;
+echo $customerTable->printTxt();
 
 // Creates an order table and create the FKs there
 $orderNo = new \PHPSchemaManager\Objects\Column('id');
 $orderNo->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-// Create references to the Book table
-$orderBookId = new \PHPSchemaManager\Objects\Column('bookId');
-$orderBookId->references($bookTable->hasColumn('id'));
-$orderAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
-$orderAuthorId->references($bookTable->hasColumn('authorId'));
+// Create reference to the Tire table
+// This time, the carbon copy is used to create a exact copy of the column that will be referenced
+// The actionOnDelete method will be called empty, which means that on delete, no action will be taken
+$orderTireId = $tireId->carbonCopy('tireId');
+$orderTireId->references($tireId)->actionOnDelete();
 
 // Create a reference to the customer table
+// Below is showed how to explicitly inform the NO ACTION On Delete.
 $orderCustomerId = new \PHPSchemaManager\Objects\Column('customerId');
-$orderCustomerId->references($customerTable->hasColumn('id'));
+$orderCustomerId->references($customerId)->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
 
 $orderTable = new \PHPSchemaManager\Objects\Table('order');
 $orderTable->addColumn($orderNo);
-$orderTable->addColumn($orderBookId);
-$orderTable->addColumn($orderAuthorId);
+$orderTable->addColumn($orderTireId);
 $orderTable->addColumn($orderCustomerId);
 
 // Show the order table with its references
-$orderTable->printTxt();
+echo "Order table created with multiple FKs on it. Notice that the action On Delete is NO ACTION " . PHP_EOL;
+echo $orderTable->printTxt();
 
 // Commits the changes to the database
 $schema->flush();
 
 // Prints the table to see the FKs persisted in the database
-echo "Now see the FK created after the flush to the database\n";
+echo "Now see the FK created in the Order table, after the flush to the database\n";
 echo $orderTable->printTxt();
-*/
