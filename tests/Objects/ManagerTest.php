@@ -672,6 +672,8 @@ class ManagerTest
     $this->assertEquals(4, $m->hasSchema("testLibrary")->countTables(), "The Schema 'testLibrary' is expected to have 4 tables");
     $this->assertEquals(3, $m->hasSchema("testInstitution")->countTables(), "The Schema 'testInstitution' is expected to have 4 tables");
 
+    $this->assertFalse($m->hasSchema('testLibrary')->hasTable('review')->hasColumn('reviewId')->isSigned(), "reviewId Column is exptected to be signed");
+
     $m->hasSchema("testInstitution")->drop();
     $m->hasSchema("testLibrary")->drop();
 
@@ -735,9 +737,6 @@ class ManagerTest
         $bookId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
         $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
-        $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
-        $bookAuthorId->setSize(10);
-        $bookAuthorId->unsigned();
         $bookAuthorId->references($authorId);
 
         $bookTitle = new \PHPSchemaManager\Objects\Column('title');
@@ -758,22 +757,13 @@ class ManagerTest
         $orderNo = new \PHPSchemaManager\Objects\Column('id');
         $orderNo->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-        $orderBookId = new \PHPSchemaManager\Objects\Column('bookId');
-        $orderBookId->setType(\PHPSchemaManager\Objects\Column::INT);
-        $orderBookId->setSize(10);
-        $orderBookId->unsigned();
+        $orderBookId = $bookTable->hasColumn('id')->carbonCopy('bookId');
         $orderBookId->references($bookTable->hasColumn('id'));
 
         $orderAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
-        $orderAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
-        $orderAuthorId->setSize(10);
-        $orderAuthorId->unsigned();
         $orderAuthorId->references($authorTable->hasColumn('id'));
 
         $orderCustomerId = new \PHPSchemaManager\Objects\Column('customerId');
-        $orderCustomerId->setType(\PHPSchemaManager\Objects\Column::INT);
-        $orderCustomerId->setSize(10);
-        $orderCustomerId->unsigned();
         $orderCustomerId->references($customerTable->hasColumn('id'))->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
 
         $orderTable = new \PHPSchemaManager\Objects\Table('order');
@@ -859,27 +849,4 @@ class ManagerTest
             $m->hasTable('book')->hasColumn('authorId')->getReference()->getActionOnDelete(),
             'the authorId field is expected to ignore when a deletion is onde');
     }
-
-  /**
-   * @expectedException \PHPSchemaManager\Exceptions\ColumnException
-   */
-  public function testForeignKeyCreationInconsistency() {
-      $authorId = new \PHPSchemaManager\Objects\Column('id');
-      $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
-
-      $authorName = new \PHPSchemaManager\Objects\Column('name');
-      $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
-      $authorName->setSize(100);
-
-      $authorTable = new \PHPSchemaManager\Objects\Table('author');
-      $authorTable->addColumn($authorId);
-      $authorTable->addColumn($authorName);
-
-      $bookId = new \PHPSchemaManager\Objects\Column('id');
-      $bookId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
-
-      $bookAuthorId = new \PHPSchemaManager\Objects\Column('authorId');
-      $bookAuthorId->setType(\PHPSchemaManager\Objects\Column::INT);
-      $bookAuthorId->references($authorId);
-  }
 }
