@@ -56,7 +56,7 @@ class Column extends Objects implements ObjectEventsInterface
         $this->setDefaultValue(self::NODEFAULTVALUE);
 
         // Although is not possible to determine if the column is a numeric type
-        // this class will assume that the number is not signed by default
+        // this class will assume that the number is signed by default
         // In case the type gets a non-numeric type, no problem, since the signed
         // information will be ignored when generating the SQL to manage the column
         // in the database
@@ -96,11 +96,6 @@ class Column extends Objects implements ObjectEventsInterface
         $obj = $this->typeStrategy();
         if (!empty($obj)) {
             $obj->configure();
-        }
-
-        // configures a default size for SERIAL types
-        if (self::SERIAL == $type) {
-            $this->setSize(10);
         }
 
         $this->markForAlter();
@@ -306,7 +301,8 @@ class Column extends Objects implements ObjectEventsInterface
     }
 
     /**
-     * Informs which column will be referenced by this foreign key
+     * Informs which column will be referenced by this foreign key.
+     * When doing that, the current current object will be cloned from the referenced object
      *
      * @param \PHPSchemaManager\Objects\Column $column Column being referenced
      * @param string $idxName Optional - index name
@@ -314,16 +310,14 @@ class Column extends Objects implements ObjectEventsInterface
      */
     public function references(Column $column, $idxName = null)
     {
+        // By automatically mimicking the referenced object, the developer doesn't need to take care about creating
+        //   an object that have the same attributes of the referenced object
+        // It it will save time from the developer. Mimic method is dangerous to be used, that's why it is procted
+        //   from public usage, so the library can control how it will be called
+        $this->mimics($column);
+
         if (empty($idxName)) {
             $idxName = $column->getName() . "IdxFK";
-        }
-
-        // check if the column and the referenced column have the same type
-        if (!$this->equals(($column))) {
-            $msg = "$this column type doesn't match with $column column";
-            $msg .= PHP_EOL . $this->printTxt() . PHP_EOL;
-            $msg .= $column->printTxt();
-            throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
         }
 
         $this->reference = new ColumnReference($idxName);;
@@ -366,6 +360,18 @@ class Column extends Objects implements ObjectEventsInterface
         }
 
         return null;
+    }
+
+    /**
+     * Will return a clone of this object, but with the informed name
+     *
+     * @param string $newName
+     * @return \PHPSchemaManager\Objects\Column
+     */
+    public function carbonCopy($newName) {
+        $newObject = clone $this;
+        $newObject->setName($newName);
+        return $newObject;
     }
 
     public function onDelete()
@@ -493,5 +499,26 @@ class Column extends Objects implements ObjectEventsInterface
             default:
                 return $defaultValue;
         }
+    }
+
+    /**
+     * Will copy from the $that object some attributes like the type, size, default value and if the number is signed
+     *   or if is null allowed
+     * This is a method that can bring inconsistency to the data set, so it is protected from public usage.
+     *
+     * @param \PHPSchemaManager\Objects\Column $that
+     */
+    protected function mimics(\PHPSchemaManager\Objects\Column $that)
+    {
+        if (\PHPSchemaManager\Objects\Column::SERIAL == $that->getType()) {
+            $this->setType(\PHPSchemaManager\Objects\Column::INT);
+        } else {
+            $this->setType($that->getType());
+        }
+
+        $this->setSize($that->getSize());
+        $this->setDefaultValue($that->getDefaultValue());
+        $that->isSigned() ? $this->signed() : $this->unsigned();
+        $that->isNullAllowed() ? $this->allowsNull() : $this->forbidsNull();
     }
 }
