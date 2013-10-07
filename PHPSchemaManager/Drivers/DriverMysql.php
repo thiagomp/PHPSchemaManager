@@ -46,17 +46,19 @@ class DriverMysql implements DriverInterface
 
     public function selectDb($dbName = null)
     {
-
-        if ($this->getDatabaseSelected() != $dbName && !empty($dbName)) {
-            if (!mysql_select_db($dbName)) {
-                $msg = "Database '$dbName' wasn't found, you have to create it first";
-                throw new \SchemaManager\Exceptions\MysqlException($msg);
-            }
-
-            $this->databaseSelected = $dbName;
+        if (empty($dbName)) {
+            $dbName = $this->getDatabaseSelected();
         }
 
-        return $this->getDatabaseSelected();
+        if (!mysql_select_db($dbName)) {
+            $msg = "Database '$dbName' wasn't found, you have to create it first";
+            throw new \SchemaManager\Exceptions\MysqlException($msg);
+        }
+
+        $this->databaseSelected = $dbName;
+
+        return $dbName;
+
     }
 
     public function getDatabaseSelected()
