@@ -30,15 +30,15 @@ class ColumnReference extends Objects implements ObjectEventsInterface
 
     public function actionOnUpdate($referenceOption = self::NOACTION)
     {
-        $this->setAction(__FUNCTION__, $referenceOption);
+        $this->setReferenceAction(__FUNCTION__, $referenceOption);
     }
 
     public function actionOnDelete($referenceOption = self::NOACTION)
     {
-        $this->setAction(__FUNCTION__, $referenceOption);
+        $this->setReferenceAction(__FUNCTION__, $referenceOption);
     }
 
-    protected function setAction($action, $referenceOption)
+    protected function setReferenceAction($action, $referenceOption)
     {
         if ($this->isReferenceOptionsValid($referenceOption)) {
             $this->{$action} = $referenceOption;
