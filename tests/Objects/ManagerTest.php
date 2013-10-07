@@ -795,6 +795,7 @@ class ManagerTest
 
         // creates a new manager to for the library to read the data from the database
         $ma = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+        $ma->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
         $m = $ma->hasSchema('ModernLibrary');
 
         // check if the expected columns are recognized as FK
