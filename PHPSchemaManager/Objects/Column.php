@@ -320,7 +320,7 @@ class Column extends Objects implements ObjectEventsInterface
             $idxName = $column->getName() . "IdxFK";
         }
 
-        $this->reference = new ColumnReference($idxName);;
+        $this->reference = new ColumnReference($idxName);
         $this->referencedColumn = $column;
         $this->markForAlter();
         return $this->reference;
@@ -354,7 +354,8 @@ class Column extends Objects implements ObjectEventsInterface
      *
      * @return \PHPSchemaManager\Objects\ColumnReference|null
      */
-    public function getReference() {
+    public function getReference()
+    {
         if ($this->isFK()) {
             return $this->reference;
         }
@@ -368,7 +369,8 @@ class Column extends Objects implements ObjectEventsInterface
      * @param string $newName
      * @return \PHPSchemaManager\Objects\Column
      */
-    public function carbonCopy($newName) {
+    public function carbonCopy($newName)
+    {
         $newObject = clone $this;
         $newObject->setName($newName);
         return $newObject;
@@ -414,7 +416,7 @@ class Column extends Objects implements ObjectEventsInterface
         $signed = ', _';
         if ($this->isSigned()) {
             $signed = ", signed";
-        } elseif($this->isNumeric()) {
+        } elseif ($this->isNumeric()) {
             $signed = ", unsigned";
         }
 
@@ -463,14 +465,13 @@ class Column extends Objects implements ObjectEventsInterface
      */
     public function equals(Column $column)
     {
-        if ($this->getSize() == $column->getSize() && $this->isSigned() == $column->isSigned() ) {
+        if ($this->getSize() == $column->getSize() && $this->isSigned() == $column->isSigned()) {
             if (($this->getType() == \PHPSchemaManager\Objects\Column::SERIAL &&
                 $column->getType() == \PHPSchemaManager\Objects\Column::INT) ||
                 ($column->getType() == \PHPSchemaManager\Objects\Column::SERIAL &&
                 $this->getType() == \PHPSchemaManager\Objects\Column::INT)) {
                 return true;
-            }
-            elseif ($this->getType() == $column->getType()) {
+            } elseif ($this->getType() == $column->getType()) {
                 return true;
             }
         }

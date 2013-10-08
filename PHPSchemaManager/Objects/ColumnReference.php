@@ -64,11 +64,12 @@ class ColumnReference extends Objects implements ObjectEventsInterface
     }
 
 
-    protected function isReferenceOptionsValid($option) {
-        if (FALSE !== array_search($option, array(self::CASCADE, self::NOACTION, self::RESTRICT, self::SETNULL))) {
-            return TRUE;
+    protected function isReferenceOptionsValid($option)
+    {
+        if (false !== array_search($option, array(self::CASCADE, self::NOACTION, self::RESTRICT, self::SETNULL))) {
+            return true;
         }
-        return FALSE;
+        return false;
     }
 
     public function onDelete()

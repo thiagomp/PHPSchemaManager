@@ -392,7 +392,7 @@ class DriverMysql implements DriverInterface
         $sql = "SHOW TABLE STATUS WHERE NAME = '$table'";
         $res = $this->dbQuery($sql);
 
-        while($row = mysql_fetch_assoc($res)) {
+        while ($row = mysql_fetch_assoc($res)) {
             if ('Engine' == key($row)) {
                 $conf['engine'] = current($row);
                 break;
@@ -406,19 +406,15 @@ class DriverMysql implements DriverInterface
                 case TableSpecificMysql::MYISAM:
                     $specifics->markAsMyIsam();
                     break;
-
                 case TableSpecificMysql::INNODB:
                     $specifics->markAsInnoDb();
                     break;
-
                 case TableSpecificMysql::CSV:
                     $specifics->markAsCsv();
                     break;
-
                 case TableSpecificMysql::MEMORY:
                     $specifics->markAsMemory();
                     break;
-
                 case TableSpecificMysql::BLACKHOLE:
                     $specifics->markAsBlackhole();
                     break;
@@ -550,13 +546,15 @@ class DriverMysql implements DriverInterface
 
                 $instruction[$index]['instructionColumn'] .= "$column, ";
                 $instruction[$index]['instructionReferencedColumn'] .= $column->getReferencedColumn() . ", ";
-                $instruction[$index]['deleteAction'] = $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete());
-                $instruction[$index]['updateAction'] = $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate());
+                $instruction[$index]['deleteAction'] = $this->getReferenceOptionDescription(
+                    $column->getReference()->getActionOnDelete());
+                $instruction[$index]['updateAction'] = $this->getReferenceOptionDescription(
+                    $column->getReference()->getActionOnUpdate());
             }
 
         }
 
-        foreach($instruction as $referencedTable => $item) {
+        foreach ($instruction as $referencedTable => $item) {
             $instructionColumn = rtrim($item['instructionColumn'], ", ");
             $instructionReferencedColumn = rtrim($item['instructionReferencedColumn'], ", ");
             $fkInstruction .= "FOREIGN KEY ($instructionColumn)" . PHP_EOL .
@@ -626,13 +624,13 @@ class DriverMysql implements DriverInterface
         if ($specifics = $this->getMysqlTableSpecifics($table)) {
             if ($specifics->isInnoDb()) {
                 $sql .= " ENGINE=InnoDb";
-            }elseif($specifics->isMyIsam()) {
+            } elseif ($specifics->isMyIsam()) {
                 $sql .= " ENGINE=MYISAM";
-            }elseif($specifics->isCsv()) {
+            } elseif ($specifics->isCsv()) {
                 $sql .= " ENGINE=CSV";
-            }elseif($specifics->isMemory()) {
+            } elseif ($specifics->isMemory()) {
                 $sql .= " ENGINE=MEMORY";
-            }elseif($specifics->isBlackhole()) {
+            } elseif ($specifics->isBlackhole()) {
                 $sql .= " ENGINE=BLACKHOLE";
             }
         }
@@ -665,7 +663,7 @@ class DriverMysql implements DriverInterface
 
     protected function getMysqlTableSpecifics(\PHPSchemaManager\Objects\Table $table)
     {
-        foreach($table->getSpecificsConfiguration() as $specific) {
+        foreach ($table->getSpecificsConfiguration() as $specific) {
             if ($specific instanceof \PHPSchemaManager\Objects\TableSpecificMysql) {
                 return $specific;
             }
@@ -685,7 +683,7 @@ class DriverMysql implements DriverInterface
                 "WHERE kcu.referenced_table_name IS NOT NULL AND kcu.table_schema = '{$schema}'";
         $res = $this->dbQuery($sql);
 
-        while($row = mysql_fetch_assoc($res)) {
+        while ($row = mysql_fetch_assoc($res)) {
             $originTable = $schema->hasTable($row['origin_table']);
             $fkColumn = $originTable->hasColumn($row['fk_name']);
             if (!empty($fkColumn)) {

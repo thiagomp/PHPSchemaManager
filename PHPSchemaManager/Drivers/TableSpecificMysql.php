@@ -68,14 +68,15 @@ class TableSpecificMysql extends TableSpecific
 
     protected function setEngine($engineName = self::MYISAM)
     {
-        if (FALSE !== array_search($engineName, $this->allowedEngineTypes())) {
+        if (false !== array_search($engineName, $this->allowedEngineTypes())) {
             $this->engine = $engineName;
         } else {
             throw new \PHPSchemaManager\Exceptions\MysqlException("$engineName is not a supported engine");
         }
     }
 
-    protected function getEngine() {
+    protected function getEngine()
+    {
         return $this->engine;
     }
 

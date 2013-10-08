@@ -196,7 +196,8 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
         $this->tableSpecifics[] = $specifics;
     }
 
-    public function getSpecificsConfiguration() {
+    public function getSpecificsConfiguration()
+    {
         return $this->tableSpecifics;
     }
 
