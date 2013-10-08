@@ -544,12 +544,12 @@ class DriverMysql implements DriverInterface
                     $instruction[$index]['instructionReferencedColumn'] = "";
                 }
 
+                $deleteAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete());
+                $updateAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate());
                 $instruction[$index]['instructionColumn'] .= "$column, ";
                 $instruction[$index]['instructionReferencedColumn'] .= $column->getReferencedColumn() . ", ";
-                $instruction[$index]['deleteAction'] = $this->getReferenceOptionDescription(
-                    $column->getReference()->getActionOnDelete());
-                $instruction[$index]['updateAction'] = $this->getReferenceOptionDescription(
-                    $column->getReference()->getActionOnUpdate());
+                $instruction[$index]['deleteAction'] = $deleteAction;
+                $instruction[$index]['updateAction'] = $updateAction;
             }
 
         }
