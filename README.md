@@ -80,7 +80,7 @@ Items to be developed. Not necessarily in this order.
 - [] Create a driver to connect with PDO
 - [] Integrate with sqlite
 - [] Integrate with PostgreSQL
-- [] Get information from [Constraints](http://dev.mysql.com/doc/refman/5.0/en/create-table-foreign-keys.html)
+- [X] Get information from [Constraints](http://dev.mysql.com/doc/refman/5.0/en/create-table-foreign-keys.html)
 - [] Detect if the user have permission to work with a certain Schema
 
 ## Documentation
