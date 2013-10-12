@@ -414,12 +414,15 @@ class Column extends Objects implements ObjectEventsInterface
 
         // check if it is a numeric type and show if the field is signed or not
         $signed = ', _';
-        if ($this->isSigned()) {
-            $signed = ", signed";
-        } elseif ($this->isNumeric()) {
-            $signed = ", unsigned";
+        if ($this->isNumeric()) {
+            if ($this->isSigned()) {
+                $signed = ", signed";
+            } else {
+                $signed = ", unsigned";
+            }
         }
 
+        // column name: type(size), <is null value allowed>, default value, signed, fk info
         return "$this: {$this->getType()}({$this->getSize()}), " .
                 ($this->isNullAllowed() ? "NULL" : "NOT NULL") .
                 $defaultValue .
