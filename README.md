@@ -60,10 +60,10 @@ You should see something like this
 ```
 Tables from test (1 tables found) [synced]
 table1 [synced]
-  id: serial(10), NOT NULL,  [synced]
-  columnA: varchar(20), NULL, 'NULL' [synced]
-  columnB: char(5), NULL, 'NULL' [synced]
-  columnC: timestamp(0), NOT NULL, CURRENT_TIMESTAMP [synced]
+  id: serial(10), NOT NULL, _, unsigned [synced]
+  columnA: varchar(20), NULL, 'NULL', _ [synced]
+  columnB: char(5), NULL, 'NULL', _ [synced]
+  columnC: timestamp(0), NOT NULL, CURRENT_TIMESTAMP, _ [synced]
   ............................
   indexes
   PRIMARY: pk (id) [synced]
