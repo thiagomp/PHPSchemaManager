@@ -55,5 +55,5 @@ echo $schema->printTxt();
 $schema->flush();
 
 // prints the schema again just to doube check
-echo "Show the schema after flushing the changes" . PHP_EOL;
+echo "Show the schema after flushing the changes:" . PHP_EOL;
 echo $schema->printTxt();
