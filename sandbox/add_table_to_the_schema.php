@@ -32,7 +32,6 @@ $newTable = new \PHPSchemaManager\Objects\Table('book');
 
 $newColumn = new \PHPSchemaManager\Objects\Column('id');
 $newColumn->setType(\PHPSchemaManager\Objects\Column::SERIAL);
-$newColumn->setSize(10);
 
 $newTable->addColumn($newColumn);
 
