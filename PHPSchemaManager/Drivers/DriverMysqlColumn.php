@@ -7,7 +7,7 @@ namespace PHPSchemaManager\Drivers;
  */
 class DriverMysqlColumn
 {
-  
+
     // these are all types defined in MySQL
     const BIT = 'BIT';
     const TINYINT = 'TINYINT';
@@ -77,7 +77,7 @@ class DriverMysqlColumn
 
     /**
      * Checks if the size informed reflects the Mysql limits
-     * 
+     *
      * @param int|string $size It can be a integer or a string with a coma separating the int part from the decimal part
      * @throws \PHPSchemaManager\Exceptions\ColumnMysqlException
      */
@@ -179,7 +179,7 @@ class DriverMysqlColumn
 
     /**
      * Map the Mysql types to the types accepted by this library
-     * 
+     *
      * @param string $type Mysql type defined by this library
      * @return string A Column constant with the equivalent type of this class
      */
@@ -237,9 +237,9 @@ class DriverMysqlColumn
     }
 
     /**
-     * 
+     *
      * @param string $type
-     * 
+     *
      */
     public function setType($type)
     {

@@ -305,6 +305,9 @@ class DriverMysql implements DriverInterface
                 }
 
                 $column->setSize($size);
+            } elseif($column->isNumeric()) {
+                // numeric column that was defined without size is flagged so the library can properly treat the case
+                $column->setSize(\PHPSchemaManager\Objects\Column::UNLIMITEDSIZE);
             }
 
             // check if there is the unsigned instruction
