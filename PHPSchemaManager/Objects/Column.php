@@ -48,6 +48,9 @@ class Column extends Objects implements ObjectEventsInterface
     const CUSTOMVALUE = 'schemamanagercustomvalue'; //TODO not supported yet, left here for future implementation
     const NODEFAULTVALUE = 'schemamanagernodefaultvalue';
 
+    // used for numbers without a limit set
+    const UNLIMITEDSIZE = 'schemamanagerfreeflight';
+
     public function __construct($columnName)
     {
         $this->setName($columnName);
@@ -110,8 +113,13 @@ class Column extends Objects implements ObjectEventsInterface
     {
         $sizeParts = array(0,0);
 
-        // FLOAT and DECIMAL types have a special way to inform their size
-        if (self::FLOAT == $this->getType() ||  self::DECIMAL == $this->getType()) {
+        // check if the column definition doesn't have size
+        if (self::UNLIMITEDSIZE == $size) {
+            // I just saw this situation happening with numeric numbers, so when this method receives a size that
+            //  that is flagged as UNLIMITEDSIZE, it's because a numeric column was defined without limit
+            $size = 999999;
+        } elseif (self::FLOAT == $this->getType() ||  self::DECIMAL == $this->getType()) {
+            // FLOAT and DECIMAL types have a special way to inform their size
             $matches = array();
             if (!preg_match('/^(\d+)(,\d+)?$/', $size, $matches)) {
                 $msg = "The informed size $size is not supported by columns of {$this->getType()} type";
@@ -209,7 +217,7 @@ class Column extends Objects implements ObjectEventsInterface
             $sizeTypes = array_merge($this->getNumericTypes(), $this->getStringTypes());
             if (false !== array_search($this->getType(), $sizeTypes)) {
                 if (mb_strlen($value) > $this->getSize()) {
-                    $msg = "The informed default value [{$value}] for column '$this' is bigger " .
+                    $msg = "The informed default value [{$value}] for column '{$this}' is bigger " .
                         "[".(mb_strlen($value))."] than the size defined for this column allows [{$this->getSize()}]";
                     throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
                 }
