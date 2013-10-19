@@ -28,13 +28,13 @@ if (!$schema = $manager->hasSchema('PHPSchemaManager')) {
 // Check if the table exists in the database
 // if not, show an error
 if (!$bookTable = $schema->hasTable('book')) {
-  echo "In order to execute this example, the table 'book' must exist.\n";
+  echo "In order to execute this example, the table 'book' must exist." . PHP_EOL;
   echo "You can create it executing the add_table_to_the_schema.php script.";
   exit(1);
 }
 
 // Prints the table to see the state of the indexes now
-echo "State of the Indexes now:\n";
+echo "State of the Indexes now:" . PHP_EOL;
 echo $bookTable->printTxt();
 
 // Create a new Index object
@@ -47,7 +47,7 @@ $titleIdx->addColumn($bookTable->hasColumn('title'));
 $bookTable->addIndex($titleIdx);
 
 // Prints the table to see the recently created Index
-echo "Notice the created index 'titleIdx'\n";
+echo "Notice the created index 'titleIdx'" . PHP_EOL;
 echo $bookTable->printTxt();
 
 
@@ -58,7 +58,7 @@ $isbnIdx->setAsUniqueKey();
 $bookTable->addIndex($isbnIdx);
 
 // Prints the table to see the Unique Key Index created
-echo "Notice the created Unique Key index 'isbnIdx'\n";
+echo "Notice the created Unique Key index 'isbnIdx'" . PHP_EOL;
 echo $bookTable->printTxt();
 
 
@@ -69,7 +69,7 @@ $multIdx->addColumn($bookTable->hasColumn('language'));
 $bookTable->addIndex($multIdx);
 
 // Prints the table to see the Multiple Key Index created
-echo "Notice the Multiple Key Index created 'multIdx'\n";
+echo "Notice the Multiple Key Index created 'multIdx'" . PHP_EOL;
 echo $bookTable->printTxt();
 
 // Commits the changes to the database

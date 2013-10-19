@@ -5,6 +5,7 @@
       <file>tests/Objects/ColumnTest.php</file>
       <file>tests/Objects/ColumnMysqlTest.php</file>
       <file>tests/Objects/TableTest.php</file>
+      <file>tests/Objects/SchemaTest.php</file>
       <file>tests/Objects/ManagerTest.php</file>
     </testsuite>
   </testsuites>

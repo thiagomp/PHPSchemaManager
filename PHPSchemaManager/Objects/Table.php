@@ -11,6 +11,7 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
 
     protected $columns = array();
     protected $indexes = array();
+    protected $tableSpecifics = array();
     protected $trulyCheckIfHasObject = false;
 
     public function __construct($tableName)
@@ -188,6 +189,16 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
         }
 
         return false;
+    }
+
+    public function addSpecificConfiguration(\PHPSchemaManager\Drivers\TableSpecific $specifics)
+    {
+        $this->tableSpecifics[] = $specifics;
+    }
+
+    public function getSpecificsConfiguration()
+    {
+        return $this->tableSpecifics;
     }
 
     public function informChange()

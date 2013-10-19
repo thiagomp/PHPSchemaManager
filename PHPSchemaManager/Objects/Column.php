@@ -16,6 +16,8 @@ class Column extends Objects implements ObjectEventsInterface
     protected $defaultValueLiteral;
     protected $signedInt;
     protected $sizeParts;
+    protected $reference = null;
+    protected $referencedColumn = null;
 
     protected $size = 0;
 
@@ -46,6 +48,9 @@ class Column extends Objects implements ObjectEventsInterface
     const CUSTOMVALUE = 'schemamanagercustomvalue'; //TODO not supported yet, left here for future implementation
     const NODEFAULTVALUE = 'schemamanagernodefaultvalue';
 
+    // used for numbers without a limit set
+    const UNLIMITEDSIZE = 'schemamanagerfreeflight';
+
     public function __construct($columnName)
     {
         $this->setName($columnName);
@@ -54,7 +59,7 @@ class Column extends Objects implements ObjectEventsInterface
         $this->setDefaultValue(self::NODEFAULTVALUE);
 
         // Although is not possible to determine if the column is a numeric type
-        // this class will assume that the number is not signed by default
+        // this class will assume that the number is signed by default
         // In case the type gets a non-numeric type, no problem, since the signed
         // information will be ignored when generating the SQL to manage the column
         // in the database
@@ -108,8 +113,13 @@ class Column extends Objects implements ObjectEventsInterface
     {
         $sizeParts = array(0,0);
 
-        // FLOAT and DECIMAL types have a special way to inform their size
-        if (self::FLOAT == $this->getType() ||  self::DECIMAL == $this->getType()) {
+        // check if the column definition doesn't have size
+        if (self::UNLIMITEDSIZE == $size) {
+            // I just saw this situation happening with numeric numbers, so when this method receives a size that
+            //  that is flagged as UNLIMITEDSIZE, it's because a numeric column was defined without limit
+            $size = 999999;
+        } elseif (self::FLOAT == $this->getType() ||  self::DECIMAL == $this->getType()) {
+            // FLOAT and DECIMAL types have a special way to inform their size
             $matches = array();
             if (!preg_match('/^(\d+)(,\d+)?$/', $size, $matches)) {
                 $msg = "The informed size $size is not supported by columns of {$this->getType()} type";
@@ -207,7 +217,7 @@ class Column extends Objects implements ObjectEventsInterface
             $sizeTypes = array_merge($this->getNumericTypes(), $this->getStringTypes());
             if (false !== array_search($this->getType(), $sizeTypes)) {
                 if (mb_strlen($value) > $this->getSize()) {
-                    $msg = "The informed default value [{$value}] for column '$this' is bigger " .
+                    $msg = "The informed default value [{$value}] for column '{$this}' is bigger " .
                         "[".(mb_strlen($value))."] than the size defined for this column allows [{$this->getSize()}]";
                     throw new \PHPSchemaManager\Exceptions\ColumnException($msg);
                 }
@@ -277,11 +287,7 @@ class Column extends Objects implements ObjectEventsInterface
      */
     public function isNumeric()
     {
-        if (false !== array_search($this->getType(), $this->getNumericTypes())) {
-            return true;
-        }
-
-        return false;
+        return in_array($this->getType(), $this->getNumericTypes());
     }
 
     public function typeStrategy()
@@ -297,19 +303,85 @@ class Column extends Objects implements ObjectEventsInterface
      *
      * @return Boolean
      */
-    public function isStringType()
+    public function isString()
     {
         return in_array($this->getType(), $this->getStringTypes());
     }
 
     /**
-     * Check if the column is one of the Numeric types possible for the column
+     * Informs which column will be referenced by this foreign key.
+     * When doing that, the current current object will be cloned from the referenced object
      *
-     * @return Boolean
+     * @param \PHPSchemaManager\Objects\Column $column Column being referenced
+     * @param string $idxName Optional - index name
+     * @return \PhpSchemaManager\Objects\ColumnReference
      */
-    public function isNumericType()
+    public function references(Column $column, $idxName = null)
     {
-        return in_array($this->getType(), $this->getNumericTypes());
+        // By automatically mimicking the referenced object, the developer doesn't need to take care about creating
+        //   an object that have the same attributes of the referenced object
+        // It it will save time from the developer. Mimic method is dangerous to be used, that's why it is procted
+        //   from public usage, so the library can control how it will be called
+        $this->mimics($column);
+
+        if (empty($idxName)) {
+            $idxName = $column->getName() . "IdxFK";
+        }
+
+        $this->reference = new ColumnReference($idxName);
+        $this->referencedColumn = $column;
+        $this->markForAlter();
+        return $this->reference;
+    }
+
+    /**
+     * Check if the column if a foreign key of another table
+     * @return boolean
+     */
+    public function isFK()
+    {
+        return !empty($this->reference);
+    }
+
+    /**
+     * Get the referenced column by this FK
+     *
+     * @return \PhpSchemaManager\Objects\Column
+     */
+    public function getReferencedColumn()
+    {
+        if ($this->isFK()) {
+            return $this->referencedColumn;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the reference object
+     *
+     * @return \PHPSchemaManager\Objects\ColumnReference|null
+     */
+    public function getReference()
+    {
+        if ($this->isFK()) {
+            return $this->reference;
+        }
+
+        return null;
+    }
+
+    /**
+     * Will return a clone of this object, but with the informed name
+     *
+     * @param string $newName
+     * @return \PHPSchemaManager\Objects\Column
+     */
+    public function carbonCopy($newName)
+    {
+        $newObject = clone $this;
+        $newObject->setName($newName);
+        return $newObject;
     }
 
     public function onDelete()
@@ -333,13 +405,38 @@ class Column extends Objects implements ObjectEventsInterface
 
         // normalizes the default value to have a better presentation when printed
         $defaultValue = $this->getNormalizedDefaultValue();
-        if ($this->isStringType()) {
-            $defaultValue = "'$defaultValue'";
+        if (!empty($defaultValue)) {
+            if ($this->isString()) {
+                $defaultValue = ", '$defaultValue'";
+            } else {
+                $defaultValue = ", $defaultValue";
+            }
+        } else {
+            $defaultValue = ", _";
         }
 
+        // put together the text to inform the foreign keys
+        $fkInfo = ($this->isFK() ? ", FK(table:" . $this->getReferencedColumn()->getFather() . ", column:"
+                    . $this->getReferencedColumn() . ", on delete:" . $this->getReference()->getActionOnDelete() .
+                    ", on update:" . $this->getReference()->getActionOnUpdate() . ") " : ' ');
+
+        // check if it is a numeric type and show if the field is signed or not
+        $signed = ', _';
+        if ($this->isNumeric()) {
+            if ($this->isSigned()) {
+                $signed = ", signed";
+            } else {
+                $signed = ", unsigned";
+            }
+        }
+
+        // column name: type(size), <is null value allowed>, default value, signed, fk info
         return "$this: {$this->getType()}({$this->getSize()}), " .
                 ($this->isNullAllowed() ? "NULL" : "NOT NULL") .
-                ", {$defaultValue} [{$this->getAction()}]";
+                $defaultValue .
+                $signed .
+                $fkInfo .
+                "[{$this->getAction()}]";
     }
 
     /**
@@ -370,6 +467,29 @@ class Column extends Objects implements ObjectEventsInterface
         return $json;
     }
 
+    /**
+     * Checks if a column is equal to each other.
+     * It will be considered equal in case type, size and signed are the same
+     *
+     * @param \PHPSchemaManager\Objects\Column $column
+     * @return boolean1
+     */
+    public function equals(Column $column)
+    {
+        if ($this->getSize() == $column->getSize() && $this->isSigned() == $column->isSigned()) {
+            if (($this->getType() == \PHPSchemaManager\Objects\Column::SERIAL &&
+                $column->getType() == \PHPSchemaManager\Objects\Column::INT) ||
+                ($column->getType() == \PHPSchemaManager\Objects\Column::SERIAL &&
+                $this->getType() == \PHPSchemaManager\Objects\Column::INT)) {
+                return true;
+            } elseif ($this->getType() == $column->getType()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function __toString()
     {
         return $this->getName();
@@ -391,5 +511,26 @@ class Column extends Objects implements ObjectEventsInterface
             default:
                 return $defaultValue;
         }
+    }
+
+    /**
+     * Will copy from the $that object some attributes like the type, size, default value and if the number is signed
+     *   or if is null allowed
+     * This is a method that can bring inconsistency to the data set, so it is protected from public usage.
+     *
+     * @param \PHPSchemaManager\Objects\Column $that
+     */
+    protected function mimics(\PHPSchemaManager\Objects\Column $that)
+    {
+        if (\PHPSchemaManager\Objects\Column::SERIAL == $that->getType()) {
+            $this->setType(\PHPSchemaManager\Objects\Column::INT);
+        } else {
+            $this->setType($that->getType());
+        }
+
+        $this->setSize($that->getSize());
+        $this->setDefaultValue($that->getDefaultValue());
+        $that->isSigned() ? $this->signed() : $this->unsigned();
+        $that->isNullAllowed() ? $this->allowsNull() : $this->forbidsNull();
     }
 }

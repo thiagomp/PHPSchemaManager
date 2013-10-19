@@ -3,7 +3,7 @@ namespace PHPSchemaManager\Drivers;
 
 class DriverMysql implements DriverInterface
 {
-  
+
     protected $sm;
     protected $conn;
     protected $databaseSelected = false;
@@ -16,19 +16,19 @@ class DriverMysql implements DriverInterface
     {
         $this->conn = $conn;
     }
-  
-  
+
+
     // Methods from the interface
     public function connect()
     {
         if (empty($this->linkIdentifier)) {
 
             $port = $this->conn->port;
-      
+
             if (empty($port)) {
                 $port = "3306";
             }
-      
+
             $host = "{$this->conn->hostname}:{$port}";
             $username = $this->conn->username;
             $password = $this->conn->password;
@@ -46,21 +46,19 @@ class DriverMysql implements DriverInterface
 
     public function selectDb($dbName = null)
     {
-    
         if (empty($dbName)) {
             $dbName = $this->getDatabaseSelected();
         }
 
-        if ($this->databaseSelected != $dbName) {
-            if (!mysql_select_db($dbName)) {
-                $msg = "Database '$dbName' wasn't found, you have to create it first";
-                throw new \SchemaManager\Exceptions\MysqlException($msg);
-            }
-
-            $this->databaseSelected = $dbName;
+        if (!mysql_select_db($dbName)) {
+            $msg = "Database '$dbName' wasn't found, you have to create it first";
+            throw new \SchemaManager\Exceptions\MysqlException($msg);
         }
 
+        $this->databaseSelected = $dbName;
+
         return $dbName;
+
     }
 
     public function getDatabaseSelected()
@@ -114,12 +112,18 @@ class DriverMysql implements DriverInterface
             // get the indexes
             $this->getIndexes($table);
 
+            // get table specifics
+            $this->getSpecifics($table);
+
             $table->persisted();
 
             $schema->addTable($table);
         }
+
+        // get the foreign keys from all tables
+        $this->getForeignKeys($schema);
     }
-  
+
     public function dbQuery($sql)
     {
 
@@ -140,12 +144,12 @@ class DriverMysql implements DriverInterface
 
     public function getCreateTableStatement(\PHPSchemaManager\Objects\Table $table)
     {
-        $sql = "SHOW CREATE TABLE $table";
+        $sql = "SHOW CREATE TABLE `{$table}`";
         $result = $this->dbQuery($sql);
         $row = $this->dbFetchArray($result);
         return $row["Create Table"];
     }
-  
+
     public function getTableCount($table)
     {
         $this->selectDb();
@@ -154,7 +158,7 @@ class DriverMysql implements DriverInterface
         $res = $this->dbFetchArray($this->dbQuery($sql));
         return (int)$res['num_rows'];
     }
-  
+
     public function flush(\PHPSchemaManager\Objects\Schema $schema)
     {
         // if the schema should be ignored, just mark it as synced and move on
@@ -181,7 +185,7 @@ class DriverMysql implements DriverInterface
                 // nothing to do
                 break;
             default:
-                $msg = "Action {$table->getAction()} is not implemented by this library";
+                $msg = "Action {$schema->getAction()} is not implemented by this library";
                 throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
 
@@ -222,7 +226,7 @@ class DriverMysql implements DriverInterface
         // the schema and its tables are now persisted
         return true;
     }
-  
+
     public function getVersion()
     {
         $sql = "SHOW VARIABLES LIKE '%version%'";
@@ -236,7 +240,7 @@ class DriverMysql implements DriverInterface
 
         return "Not found";
     }
-  
+
     public function checkLowerCaseTableNames()
     {
         //http://dev.mysql.com/doc/refman/5.0/en/identifier-case-sensitivity.html
@@ -252,13 +256,13 @@ class DriverMysql implements DriverInterface
             return false;
         }
     }
-  
+
     // Methods specific for MySQL
     protected function getColumns(\PHPSchemaManager\Objects\Table $table)
     {
 
         // describe the tables from the database
-        $sql = "DESC $table";
+        $sql = "DESC `{$table}`";
         $resCol = $this->dbQuery($sql);
 
         while ($row = mysql_fetch_assoc($resCol)) {
@@ -269,7 +273,7 @@ class DriverMysql implements DriverInterface
 
             // to get the type we have to first separate the type name from its size, if any.
             $matches = '';
-            $regex = "/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)/";
+            $regex = "/([a-zA-Z]+)(\(?([']?[0-9a-zA-Z_]*[']?([,]?[']?[0-9a-zA-Z][']?)*)\)?)( ([a-zA-Z]+))?/";
             preg_match($regex, strtolower($row['Type']), $matches);
 
             if (empty($matches[0])) {
@@ -301,11 +305,16 @@ class DriverMysql implements DriverInterface
                 }
 
                 $column->setSize($size);
+            } elseif ($column->isNumeric()) {
+                // numeric column that was defined without size is flagged so the library can properly treat the case
+                $column->setSize(\PHPSchemaManager\Objects\Column::UNLIMITEDSIZE);
             }
 
             // check if there is the unsigned instruction
-            if (!empty($matches[7]) && 'unsigned' == strtolower($matches[7])) {
+            if (in_array('unsigned', $matches)) {
                 $column->unsigned();
+            } else {
+                $column->signed();
             }
 
             // check if the column can receive null values, by default this library assumes it can't
@@ -322,7 +331,7 @@ class DriverMysql implements DriverInterface
             $table->addColumn($column);
         }
     }
-  
+
     public function getIndexes(\PHPSchemaManager\Objects\Table $table)
     {
         //TODO find another way to get the indexes from mysql tables, to support older versions of MySQL
@@ -376,20 +385,67 @@ class DriverMysql implements DriverInterface
         // select the previous selected database again
         $this->selectDb($currentSelectedDb);
     }
-  
+
+    public function getSpecifics(\PHPSchemaManager\Objects\Table $table)
+    {
+        // array to hold all the specifics for this table - in the future there will more than only the engine
+        $conf = array();
+
+        // get info from the table
+        $sql = "SHOW TABLE STATUS WHERE NAME = '$table'";
+        $res = $this->dbQuery($sql);
+
+        while ($row = mysql_fetch_assoc($res)) {
+            if ('Engine' == key($row)) {
+                $conf['engine'] = current($row);
+                break;
+            }
+        }
+
+        if (!empty($conf)) {
+            $specifics = new TableSpecificMysql();
+
+            switch ($conf['engine']) {
+                case TableSpecificMysql::MYISAM:
+                    $specifics->markAsMyIsam();
+                    break;
+                case TableSpecificMysql::INNODB:
+                    $specifics->markAsInnoDb();
+                    break;
+                case TableSpecificMysql::CSV:
+                    $specifics->markAsCsv();
+                    break;
+                case TableSpecificMysql::MEMORY:
+                    $specifics->markAsMemory();
+                    break;
+                case TableSpecificMysql::BLACKHOLE:
+                    $specifics->markAsBlackhole();
+                    break;
+            }
+
+            $table->addSpecificConfiguration($specifics);
+        }
+    }
+
     protected function alterTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
-        $sql = "ALTER TABLE $table" . PHP_EOL;
+        $sql = "ALTER TABLE `{$table}`" . PHP_EOL;
         $sqlParts[] = rtrim($this->alterTableColumns($table), PHP_EOL);
         $sqlParts[] = rtrim($this->alterTableIndexes($table), PHP_EOL);
+
+        $fkSql = rtrim($this->tableForeignKeysInstruction($table), PHP_EOL);
+        $fkSql = empty($fkSql) ? "" : "ADD $fkSql";
+
+        $sqlParts[] = $fkSql;
+
 
         // normalizes the query to avoid issues
         $sql .= trim(implode("," . PHP_EOL, $sqlParts), "," . PHP_EOL) . PHP_EOL;
 
         $this->dbQuery($sql);
     }
-  
+
     protected function alterTableColumns(\PHPSchemaManager\Objects\Table $table)
     {
         $i = 0;
@@ -418,7 +474,7 @@ class DriverMysql implements DriverInterface
 
         return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
     }
-  
+
     protected function alterTableIndexes(\PHPSchemaManager\Objects\Table $table)
     {
         $i = 0;
@@ -472,54 +528,210 @@ class DriverMysql implements DriverInterface
 
         return empty($instruction) ? "" : implode(", " . PHP_EOL, $instruction);
     }
-  
+
+    protected function tableForeignKeysInstruction(\PHPSchemaManager\Objects\Table $table)
+    {
+        $instruction = array();
+        $fkInstruction = '';
+
+        foreach ($table->getColumns() as $column) {
+            /** @var $column \PHPSchemaManager\Objects\Column */
+
+            if ($column->shouldCreate() && $column->isFK()) {
+                /** @var $referencedTable \PHPSchemaManager\Objects\Column */
+                $referencedTable = $column->getReferencedColumn()->getFather();
+                $index = $referencedTable->getName();
+
+                if (empty($instruction[$index])) {
+                    $instruction[$index]['instructionColumn'] = "";
+                    $instruction[$index]['instructionReferencedColumn'] = "";
+                }
+
+                $deleteAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnDelete());
+                $updateAction = $this->getReferenceOptionDescription($column->getReference()->getActionOnUpdate());
+                $instruction[$index]['instructionColumn'] .= "$column, ";
+                $instruction[$index]['instructionReferencedColumn'] .= $column->getReferencedColumn() . ", ";
+                $instruction[$index]['deleteAction'] = $deleteAction;
+                $instruction[$index]['updateAction'] = $updateAction;
+            }
+
+        }
+
+        foreach ($instruction as $referencedTable => $item) {
+            $instructionColumn = rtrim($item['instructionColumn'], ", ");
+            $instructionReferencedColumn = rtrim($item['instructionReferencedColumn'], ", ");
+            $fkInstruction .= "FOREIGN KEY ($instructionColumn)" . PHP_EOL .
+                            "\tREFERENCES $referencedTable ($instructionReferencedColumn)" . PHP_EOL .
+                            "\tON DELETE {$item['deleteAction']}" . PHP_EOL .
+                            "\tON UPDATE {$item['updateAction']}, " . PHP_EOL;
+        }
+
+        if (!empty($fkInstruction)) {
+            $fkInstruction = substr($fkInstruction, 0, -1 * (strlen(", " . PHP_EOL)));
+        }
+
+        return $fkInstruction;
+    }
+
+    protected function getReferenceOptionDescription($referenceOption = null)
+    {
+        switch ($referenceOption) {
+            case \PHPSchemaManager\Objects\ColumnReference::NOACTION:
+                $description = "NO ACTION";
+                break;
+            case \PHPSchemaManager\Objects\ColumnReference::RESTRICT:
+                $description = "RESTRICT";
+                break;
+            case \PHPSchemaManager\Objects\ColumnReference::SETNULL:
+                $description = "SET NULL";
+                break;
+            case \PHPSchemaManager\Objects\ColumnReference::CASCADE:
+            default:
+                $description = "CASCADE";
+        }
+
+        return $description;
+    }
+
+
     protected function deleteTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
-        $sql = "DROP TABLE $table";
+        $sql = "DROP TABLE `{$table}`";
         $this->dbQuery($sql);
         $table->markAsDeleted();
         $table->destroy();
     }
-  
+
     protected function createTable(\PHPSchemaManager\Objects\Table $table)
     {
         $this->selectDb();
-        $sql = "CREATE TABLE $table (" . PHP_EOL;
+        $sql = "CREATE TABLE `{$table}` (" . PHP_EOL;
 
         foreach ($table->getColumns() as $column) {
             $col = new DriverMysqlColumn($column);
             $sql .= $col->getDataDefinition() . "," . PHP_EOL;
         }
 
+        // get the instruction to create the foreign keys
+        $fkSql = $this->tableForeignKeysInstruction($table);
+        $fkSql = empty($fkSql) ? "" : "$fkSql," . PHP_EOL;
+        $sql .= $fkSql;
+
         // removes the last comma + EOL from the clause. SQL is not like PHP...
         $sql = substr($sql, 0, (strlen(PHP_EOL)+1)*-1);
 
         $sql .= PHP_EOL . ")";
+
+        // check if there is any specific configuration
+        if ($specifics = $this->getMysqlTableSpecifics($table)) {
+            if ($specifics->isInnoDb()) {
+                $sql .= " ENGINE=InnoDb";
+            } elseif ($specifics->isMyIsam()) {
+                $sql .= " ENGINE=MYISAM";
+            } elseif ($specifics->isCsv()) {
+                $sql .= " ENGINE=CSV";
+            } elseif ($specifics->isMemory()) {
+                $sql .= " ENGINE=MEMORY";
+            } elseif ($specifics->isBlackhole()) {
+                $sql .= " ENGINE=BLACKHOLE";
+            }
+        }
 
         $this->dbQuery($sql);
     }
 
     /**
      * Create database
-     * 
+     *
      * @param string $dbName
      */
     protected function createDatabase($dbName)
     {
-        $sql = "CREATE DATABASE $dbName";
+        $sql = "CREATE DATABASE `{$dbName}`";
         try {
             $this->dbQuery($sql);
         } catch (\PHPSchemaManager\Exceptions\MysqlException $e) {
             //do nothing, if the database is already created, no problem
         }
     }
-  
+
     protected function dropDatabase(\PHPSchemaManager\Objects\Schema $schema)
     {
-        $sql = "DROP DATABASE $schema";
+        $sql = "DROP DATABASE `{$schema}`";
         $this->dbQuery($sql);
         $schema->markAsDeleted();
         $schema->destroy();
+    }
+
+    protected function getMysqlTableSpecifics(\PHPSchemaManager\Objects\Table $table)
+    {
+        foreach ($table->getSpecificsConfiguration() as $specific) {
+            if ($specific instanceof \PHPSchemaManager\Objects\TableSpecificMysql) {
+                return $specific;
+            }
+        }
+
+        return false;
+    }
+
+    protected function getForeignKeys(\PHPSchemaManager\Objects\Schema $schema)
+    {
+
+        $sql = "SELECT kcu.table_name AS origin_table, kcu.column_name AS fk_name, " . PHP_EOL .
+                "  kcu.referenced_table_name, kcu.referenced_column_name, rc.update_rule, rc.delete_rule" . PHP_EOL .
+                "FROM information_schema.key_column_usage AS kcu" . PHP_EOL .
+                "INNER JOIN information_schema.referential_constraints AS rc" . PHP_EOL .
+                "  ON rc.table_name = kcu.table_name AND rc.constraint_name = kcu.constraint_name" . PHP_EOL .
+                "WHERE kcu.referenced_table_name IS NOT NULL AND kcu.table_schema = '{$schema}'";
+        $res = $this->dbQuery($sql);
+
+        while ($row = mysql_fetch_assoc($res)) {
+            $originTable = $schema->hasTable($row['origin_table']);
+            $fkColumn = $originTable->hasColumn($row['fk_name']);
+            if (!empty($fkColumn)) {
+                $referencedTable = $schema->hasTable($row['referenced_table_name'])
+                    ->hasColumn($row['referenced_column_name']);
+                if (!empty($referencedTable)) {
+                    $reference = $fkColumn->references($referencedTable);
+
+                    // check wich cascade rule should be associated to this column
+                    switch ($row['update_rule']) {
+                        case "CASCADE":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
+                            break;
+                        case "NO ACTION":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+                            break;
+                        case "RESTRICT":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::RESTRICT);
+                            break;
+                        case "SETNULL":
+                            $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::SETNULL);
+                            break;
+                    }
+
+                    // check wich cascade rule should be associated to this column
+                    switch ($row['delete_rule']) {
+                        case "CASCADE":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
+                            break;
+                        case "NO ACTION":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+                            break;
+                        case "RESTRICT":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::RESTRICT);
+                            break;
+                        case "SETNULL":
+                            $reference->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::SETNULL);
+                            break;
+                    }
+
+                    // mark the table as persisted
+                    $originTable->persisted();
+
+                }
+            }
+        }
     }
 }

@@ -20,6 +20,7 @@ class ColumnTypeStrategySerial implements ColumnTypeStrategyInterface
     {
         $this->column->forbidsNull();
         $this->column->unsigned();
-        $this->column->setDefaultValue("");
+        $this->column->setDefaultValue(\PHPSchemaManager\Objects\Column::NODEFAULTVALUE);
+        $this->column->setSize(10);
     }
 }
