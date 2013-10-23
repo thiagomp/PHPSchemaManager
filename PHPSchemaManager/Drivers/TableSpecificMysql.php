@@ -6,7 +6,7 @@ namespace PHPSchemaManager\Drivers;
  *
  * @author thiago
  */
-class TableSpecificMysql extends TableSpecific
+class TableSpecificMysql implements TableSpecific
 {
     const MYISAM = 'MYISAM';
     const INNODB = 'InnoDb';
@@ -83,5 +83,10 @@ class TableSpecificMysql extends TableSpecific
     protected function allowedEngineTypes()
     {
         return array(self::MYISAM, self::INNODB, self::MEMORY, self::CSV, self::BLACKHOLE);
+    }
+
+    public function printTxt()
+    {
+        return "  MySQL: [engine:{$this->getEngine()}]" . PHP_EOL;
     }
 }
