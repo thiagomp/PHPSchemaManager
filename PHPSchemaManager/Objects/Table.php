@@ -270,8 +270,8 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
         foreach ($columns as $column) {
             $str .= "  {$column->printTxt()}" . PHP_EOL;
         }
-        $str .= "  " . str_repeat(".", 28) . PHP_EOL;
 
+        $str .= "  " . str_repeat(".", 28) . PHP_EOL;
         $indexes = $this->getIndexes();
         if (!empty($indexes)) {
             $str .= "  indexes" . PHP_EOL;
@@ -281,6 +281,18 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
         } else {
             $str .= "  no indexes" . PHP_EOL;
         }
+
+        $str .= "  " . str_repeat(".", 28) . PHP_EOL;
+        $specificConfiguration = $this->getSpecificsConfiguration();
+        if (!empty($specificConfiguration)) {
+            $str .= "  specifics" . PHP_EOL;
+            foreach ($specificConfiguration as $specifics) {
+                $str .= $specifics->printTxt();
+            }
+        } else {
+            $str .= "  no specifics" . PHP_EOL;
+        }
+
         $str .= str_repeat("-", 30) . PHP_EOL . PHP_EOL;
         return $str;
     }
