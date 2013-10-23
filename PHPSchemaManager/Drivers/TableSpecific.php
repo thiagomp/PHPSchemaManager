@@ -6,7 +6,7 @@ namespace PHPSchemaManager\Drivers;
  *
  * @author thiago
  */
-abstract class TableSpecific
+interface TableSpecific
 {
-    //put your code here
+    public function printTxt();
 }
