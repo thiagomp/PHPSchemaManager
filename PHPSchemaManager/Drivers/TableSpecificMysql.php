@@ -9,7 +9,7 @@ namespace PHPSchemaManager\Drivers;
 class TableSpecificMysql implements TableSpecific
 {
     const MYISAM = 'MYISAM';
-    const INNODB = 'InnoDb';
+    const INNODB = 'INNODB';
     const MEMORY = 'MEMORY';
     const CSV = 'CSV';
     const BLACKHOLE = 'BLACKHOLE';

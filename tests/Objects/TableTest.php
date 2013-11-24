@@ -90,16 +90,18 @@ class TableTest
             'When a object is referenced, the deletions should be cascaded by default');
 
         $orderCustomerId = new \PHPSchemaManager\Objects\Column('customerId');
-        $orderCustomerId->references($customerTable->hasColumn('id'))->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
-        $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::NOACTION,
-            $orderCustomerId->getReference()->getActionOnDelete(),
-            'the customerId field is expected to ignore when a deletion is onde');
 
         $orderTable = new \PHPSchemaManager\Objects\Table('order');
         $orderTable->addColumn($orderNo);
         $orderTable->addColumn($orderBookId);
         $orderTable->addColumn($orderAuthorId);
         $orderTable->addColumn($orderCustomerId);
+
+        $orderCustomerId = $orderTable->hasColumn('customerId');
+        $orderCustomerId->references($customerTable->hasColumn('id'))->actionOnDelete(\PHPSchemaManager\Objects\ColumnReference::NOACTION);
+        $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::NOACTION,
+            $orderTable->hasColumn('customerId')->getReference()->getActionOnDelete(),
+            'the customerId field is expected to ignore when a deletion is onde');
     }
 
       public function testTableEngine() {

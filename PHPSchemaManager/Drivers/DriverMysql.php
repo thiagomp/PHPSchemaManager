@@ -396,8 +396,8 @@ class DriverMysql implements DriverInterface
         $res = $this->dbQuery($sql);
 
         while ($row = mysql_fetch_assoc($res)) {
-            if ('Engine' == key($row)) {
-                $conf['engine'] = current($row);
+            if (!empty($row['Engine'])) {
+                $conf['engine'] = strtoupper($row['Engine']);
                 break;
             }
         }
@@ -667,7 +667,7 @@ class DriverMysql implements DriverInterface
     protected function getMysqlTableSpecifics(\PHPSchemaManager\Objects\Table $table)
     {
         foreach ($table->getSpecificsConfiguration() as $specific) {
-            if ($specific instanceof \PHPSchemaManager\Objects\TableSpecificMysql) {
+            if ($specific instanceof \PHPSchemaManager\Drivers\TableSpecificMysql) {
                 return $specific;
             }
         }
@@ -683,6 +683,7 @@ class DriverMysql implements DriverInterface
                 "FROM information_schema.key_column_usage AS kcu" . PHP_EOL .
                 "INNER JOIN information_schema.referential_constraints AS rc" . PHP_EOL .
                 "  ON rc.table_name = kcu.table_name AND rc.constraint_name = kcu.constraint_name" . PHP_EOL .
+                "   AND rc.constraint_schema = kcu.constraint_schema " . PHP_EOL .
                 "WHERE kcu.referenced_table_name IS NOT NULL AND kcu.table_schema = '{$schema}'";
         $res = $this->dbQuery($sql);
 
@@ -690,12 +691,13 @@ class DriverMysql implements DriverInterface
             $originTable = $schema->hasTable($row['origin_table']);
             $fkColumn = $originTable->hasColumn($row['fk_name']);
             if (!empty($fkColumn)) {
-                $referencedTable = $schema->hasTable($row['referenced_table_name'])
+                $referencedColumn = $schema->hasTable($row['referenced_table_name'])
                     ->hasColumn($row['referenced_column_name']);
-                if (!empty($referencedTable)) {
-                    $reference = $fkColumn->references($referencedTable);
+                if (!empty($referencedColumn)) {
+                    $reference = $fkColumn->references($referencedColumn);
+                    //$reference = $schema->hasTable($row['origin_table'])->hasColumn($row['fk_name'])->references($referencedColumn);
 
-                    // check wich cascade rule should be associated to this column
+                    // check wich rule should be associated to this column
                     switch ($row['update_rule']) {
                         case "CASCADE":
                             $reference->actionOnUpdate(\PHPSchemaManager\Objects\ColumnReference::CASCADE);
