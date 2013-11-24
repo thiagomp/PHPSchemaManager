@@ -695,7 +695,6 @@ class DriverMysql implements DriverInterface
                     ->hasColumn($row['referenced_column_name']);
                 if (!empty($referencedColumn)) {
                     $reference = $fkColumn->references($referencedColumn);
-                    //$reference = $schema->hasTable($row['origin_table'])->hasColumn($row['fk_name'])->references($referencedColumn);
 
                     // check wich rule should be associated to this column
                     switch ($row['update_rule']) {
