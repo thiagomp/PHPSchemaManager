@@ -711,7 +711,11 @@ class ManagerTest
 
         $s->flush();
 
-        $confs = $s->hasTable('author')->getSpecificsConfiguration();
+        $m = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn);
+        $m->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql', 'test'));
+        $sm = $m->hasSchema("advancedTest");
+
+        $confs = $sm->hasTable('author')->getSpecificsConfiguration();
         $mts = $confs[0];
 
         $this->assertTrue($mts->isInnoDb());
@@ -771,6 +775,12 @@ class ManagerTest
         $orderTable->addColumn($orderBookId);
         $orderTable->addColumn($orderAuthorId);
         $orderTable->addColumn($orderCustomerId);
+
+        $specifics = new \PHPSchemaManager\Drivers\TableSpecificMysql();
+        $specifics->markAsInnoDb();
+
+        $bookTable->addSpecificConfiguration($specifics);
+        $orderTable->addSpecificConfiguration($specifics);
 
         // make sure all tables on this database doesn't exists
         if ($s = $this->sm->hasSchema("ModernLibrary")) {
@@ -839,15 +849,15 @@ class ManagerTest
         // check if the instructions on delete is correct
         $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::NOACTION,
             $m->hasTable('order')->hasColumn('customerId')->getReference()->getActionOnDelete(),
-            'the customerId field is expected to ignore when a deletion is onde');
+            'the customerId field is expected to ignore when a deletion is done');
         $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
             $m->hasTable('order')->hasColumn('bookId')->getReference()->getActionOnDelete(),
-            'the bookId field is expected to ignore when a deletion is onde');
+            'the bookId field is expected to cascade when a deletion is done');
         $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
             $m->hasTable('order')->hasColumn('authorId')->getReference()->getActionOnDelete(),
-            'the bookId field is expected to ignore when a deletion is onde');
+            'the bookId field is expected to ignore when a deletion is done');
         $this->assertEquals(\PHPSchemaManager\Objects\ColumnReference::CASCADE,
             $m->hasTable('book')->hasColumn('authorId')->getReference()->getActionOnDelete(),
-            'the authorId field is expected to ignore when a deletion is onde');
+            'the authorId field is expected to ignore when a deletion is done');
     }
 }
