@@ -206,10 +206,6 @@ class DriverMysql implements DriverInterface
                 case \PHPSchemaManager\Objects\Table::ACTIONCREATE:
                     $this->createTable($table);
                     $table->persisted();
-
-                    // after creating the table, refresh the Indexes, because of the SERIAL type
-                    $this->getIndexes($table);
-                    $table->persisted();
                     break;
                 case \PHPSchemaManager\Objects\Table::ACTIONDELETE:
                     $this->deleteTable($table);

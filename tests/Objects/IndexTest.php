@@ -63,16 +63,14 @@ class IndexTest
         $employeeTable->addColumn($idColumn);
         $employeeTable->addColumn($nameColumn);
         
-        $this->assertEquals(1, $employeeTable->getIndexes());
         $index = $employeeTable->getIndexes();
+				$this->assertEquals(1, count($index));
         $this->assertTrue($index[0]->isPrimaryKey());
         
         $s = new \PHPSchemaManager\Objects\Schema(self::DBTEST);
         $this->sm->addSchema($s);
+				$s->addTable($employeeTable);
         $this->sm->flush();
-        
-        $s->addTable($employeeTable);
-        $s->flush();
     }
   
   /**
@@ -81,15 +79,16 @@ class IndexTest
    *   AND this table has a serial column
    * WHEN the table is fetched
    * THEN the table will have a index related to the primary key associated to it
+	 * 
+	 * @depends testSerialIsPrimaryIndex
    */
     public function testSerialIsPrimaryIndexAfterPersisted()
     {
         $employeeTable = $this->sm->hasSchema(self::DBTEST)->hasTable('employee');
         
-        $this->assertEquals(1, $employeeTable->getIndexes());
         $index = $employeeTable->getIndexes();
+				$this->assertEquals(1, count($index));
         $this->assertTrue($index[0]->isPrimaryKey());
-
     }
     
   /**
@@ -106,7 +105,7 @@ class IndexTest
         $birthDateColumn->setType(\PHPSchemaManager\Objects\Column::DATETIME);
 
         $index = new \PHPSchemaManager\Objects\Index('idxNewComposed');
-        $index->isUniqueKey();
+        $index->setAsUniqueKey();
         $index->addColumn($employeeTable->hasColumn('name'));
         $index->addColumn($birthDateColumn);
         
@@ -116,6 +115,6 @@ class IndexTest
         $this->sm->hasSchema(self::DBTEST)->flush();
         $table = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn)->hasSchema(self::DBTEST)->hasTable('employee');
         $indexes = $table->getIndexes();
-        $this->assertTrue($indexes[1]->isUniqueKey());
+        $this->assertTrue($indexes[1]->isUniqueKey(), "Was expecting a 'Unique' index, but got a '" . $indexes[1]->getType() . "' type of index");
   }
 }

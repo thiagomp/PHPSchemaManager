@@ -28,7 +28,7 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
     public function addColumn(Column $column)
     {
 
-        // Before create, check if the table is still on the tables class variable
+        // Before create, check if the column is still on the tables class variable
         // in case it is, cause a flush, then, create the table
         // This situation might happen when the user marked a table for deletion and
         // tries to create a table with the same name before sending a flush
@@ -139,7 +139,9 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
 
     public function getIndexes()
     {
-        return $this->indexes;
+				// Regenerates the index to start always from zero
+				//TODO take into consideration the order of the indexes in the database
+        return array_values($this->indexes);
     }
 
     /**
