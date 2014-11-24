@@ -130,7 +130,7 @@ class DriverMysql implements DriverInterface
         $result = mysql_query($sql);
 
         if (!$result) {
-            $msg = 'MySQL Error: ' . mysql_error() . "\nQuery: $sql";
+            $msg = 'MySQL Error: ' . mysql_error() . PHP_EOL . "Query: $sql" . PHP_EOL . "Database: {$this->getDatabaseSelected()}";
             throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
 
@@ -205,6 +205,7 @@ class DriverMysql implements DriverInterface
                     break;
                 case \PHPSchemaManager\Objects\Table::ACTIONCREATE:
                     $this->createTable($table);
+                    $table->persisted();
 
                     // after creating the table, refresh the Indexes, because of the SERIAL type
                     $this->getIndexes($table);
@@ -613,6 +614,23 @@ class DriverMysql implements DriverInterface
             $sql .= $col->getDataDefinition() . "," . PHP_EOL;
         }
 
+        // add indexes
+        $idxSql = "";
+        foreach ($table->getIndexes() as $index) {
+         /* @var $index \PHPSchemaManager\Objects\Index */
+         if ($index->isUniqueKey()) {
+          $columns = "";
+          foreach ($index->getColumns() as $column) {
+           $columns .= "$column, ";
+          }
+          $columns = substr($columns, 0, -2);
+          $idxSql .= "UNIQUE `$index` ($columns)," . PHP_EOL;
+         }
+        }
+        $idxSql = substr($idxSql, 0, -1 * (strlen("," . PHP_EOL)));
+        $idxSql = empty($idxSql) ? "" : "$idxSql," . PHP_EOL;
+        $sql .= $idxSql;
+        
         // get the instruction to create the foreign keys
         $fkSql = $this->tableForeignKeysInstruction($table);
         $fkSql = empty($fkSql) ? "" : "$fkSql," . PHP_EOL;

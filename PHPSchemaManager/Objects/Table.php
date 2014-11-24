@@ -214,6 +214,25 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
             $this->removeIndex($object);
         }
     }
+    
+    public function informSynced()
+    {
+        foreach ($this->getColumns() as $column) {
+            /* @var $column \PHPSchemaManager\Objects\Column */
+            if (!$column->isSynced()) {
+                $this->informChange();
+                return;
+            }
+        }
+        
+        foreach ($this->getIndexes() as $index) {
+            /* @var $index \PHPSchemaManager\Objects\Index */
+            if (!$index->isSynced()) {
+                $this->informChange();
+                break;
+            }
+        }
+    }
 
     public function onDelete()
     {
@@ -246,6 +265,9 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
         $this->persistColumns();
         $this->persistIndexes();
         parent::persisted();
+        if ($father = $this->getFather()) {
+            $father->persisted();
+        }
     }
 
     public function countColumns()

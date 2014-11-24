@@ -271,7 +271,7 @@ class ManagerTest
     $bookTable = $s->hasTable('book');
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Table', $bookTable, "Failed to find the book table");
 
-    // add the new Column to the users table
+    // add the new Column to the book table
     $bookTable->addColumn($column);
 
     // Check if the Column title exists before the flush
