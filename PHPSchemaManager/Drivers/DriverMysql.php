@@ -499,24 +499,8 @@ class DriverMysql implements DriverInterface
                 $index->destroy();
             } elseif ($index->shouldCreate()) {
                 // check if the index should be created
-                $columns = array();
-                foreach ($index->getColumns() as $column) {
-                    $columns[] = "$column";
-                }
-                $columnsString = implode(", ", $columns);
-
-                // check if it is a unique key
-                $unique = $index->isUniqueKey() ? "UNIQUE " : "";
-
-                $instruction[$i] = "ADD ";
-
-                if ($index->isPrimaryKey()) {
-                    $instruction[$i] .= "PRIMARY KEY";
-                } else {
-                    $instruction[$i] .= "{$unique}INDEX $index";
-                }
-
-                $instruction[$i] .= "($columnsString)" . PHP_EOL;
+                
+                $instruction[$i] = "ADD " . $this->tableIndexesInstructions($index);
             }
 
             $i++;
@@ -570,6 +554,43 @@ class DriverMysql implements DriverInterface
         return $fkInstruction;
     }
 
+    protected function tableIndexesInstructions(\PHPSchemaManager\Objects\Index $index) {
+        $instruction = '';
+
+        if ($index->isPrimaryKey()) {
+            /** @var $column \PHPSchemaManager\Objects\Column */
+            $column = $index->getColumns();
+            $column = $column[0];
+            if ($column->getType() != \PHPSchemaManager\Objects\Column::SERIAL) {
+                $instruction .= "PRIMARY KEY";
+            }
+        } else {
+            // check if it is a unique key
+            $unique = $index->isUniqueKey() ? "UNIQUE " : "";
+            $instruction .= "{$unique}INDEX $index";
+        }
+        
+        if (!empty($instruction)) {            
+            $columnsString = $index->getColumnsList();
+            $instruction .= "($columnsString)";
+        }
+        
+        return $instruction;
+    }
+    
+    protected function createTableIndexesInstruction(\PHPSchemaManager\Objects\Table $table) {
+        $idxSql = "";
+        foreach ($table->getIndexes() as $index) {
+            /** @var $index \PHPSchemaManager\Objects\Index */
+            if ($aux = $this->tableIndexesInstructions($index)) {
+                $idxSql .= $aux . "," . PHP_EOL;
+            }
+        }
+        $idxSql = substr($idxSql, 0, -1 * (strlen("," . PHP_EOL)));
+        $idxSql = empty($idxSql) ? "" : "$idxSql," . PHP_EOL;
+        return $idxSql;
+    }
+    
     protected function getReferenceOptionDescription($referenceOption = null)
     {
         switch ($referenceOption) {
@@ -611,21 +632,7 @@ class DriverMysql implements DriverInterface
         }
 
         // add indexes
-        $idxSql = "";
-        foreach ($table->getIndexes() as $index) {
-         /* @var $index \PHPSchemaManager\Objects\Index */
-         if ($index->isUniqueKey()) {
-          $columns = "";
-          foreach ($index->getColumns() as $column) {
-           $columns .= "$column, ";
-          }
-          $columns = substr($columns, 0, -2);
-          $idxSql .= "UNIQUE `$index` ($columns)," . PHP_EOL;
-         }
-        }
-        $idxSql = substr($idxSql, 0, -1 * (strlen("," . PHP_EOL)));
-        $idxSql = empty($idxSql) ? "" : "$idxSql," . PHP_EOL;
-        $sql .= $idxSql;
+        $sql .= $this->createTableIndexesInstruction($table);
         
         // get the instruction to create the foreign keys
         $fkSql = $this->tableForeignKeysInstruction($table);

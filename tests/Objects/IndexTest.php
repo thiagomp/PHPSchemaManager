@@ -93,7 +93,7 @@ class IndexTest
     
   /**
    * Scenario:
-   * GIVEN a table that doesnt exists in the schema with a custom index
+   * GIVEN a table that doesn't exists in the schema with a custom index
    * WHEN persisting the table
    * THEN the index will be created
    */
@@ -114,7 +114,8 @@ class IndexTest
         
         $this->sm->hasSchema(self::DBTEST)->flush();
         $table = \PHPSchemaManager\PHPSchemaManager::getManager($this->conn)->hasSchema(self::DBTEST)->hasTable('employee');
-        $indexes = $table->getIndexes();
-        $this->assertTrue($indexes[1]->isUniqueKey(), "Was expecting a 'Unique' index, but got a '" . $indexes[1]->getType() . "' type of index");
+        $idx = $table->hasIndex('idxNewComposed');
+        $this->assertTrue(is_a($idx, '\PHPSchemaManager\Objects\Index'), "Was expecting a Index object");
+        $this->assertTrue($idx->isUniqueKey(), "Was expecting a 'Unique' index, but got a '" . $idx->getType() . "' type of index");
   }
 }

@@ -108,6 +108,13 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
     public function addIndex(Index $index)
     {
 
+        // Check if the index has at least one column in it.
+        if (1 > $index->countColumns()) {
+            $msg = "Invalid Index association. Indexes must have at least one "
+                    ."column before adding them to a table";
+            throw new \PHPSchemaManager\Exceptions\TableException($msg);
+        }
+        
         /* @var $oldIndex \PHPSchemaManager\Objects\Index */
         $oldIndex = $this->trulyHasObject($index);
 

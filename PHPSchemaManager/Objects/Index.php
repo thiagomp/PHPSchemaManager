@@ -82,7 +82,7 @@ class Index extends Objects implements ObjectEventsInterface
     {
         return $this->columns;
     }
-
+   
     public function setAsPrimaryKey()
     {
         $this->setType(self::PRIMARYKEY);
@@ -133,6 +133,21 @@ class Index extends Objects implements ObjectEventsInterface
         //do nothing
     }
 
+    /**
+     * Returns a comma separated string of the columns composing this index
+     * 
+     * @return string
+     */
+    public function getColumnsList() {
+        $columns = array();
+        foreach ($this->getColumns() as $column) {
+            $columns[] = "$column";
+        }
+        $columnsString = implode(", ", $columns);
+        
+        return $columnsString;
+    }
+    
     public function printTxt()
     {
         $str = "  $this: {$this->getType()} ";
