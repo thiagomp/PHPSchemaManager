@@ -130,7 +130,7 @@ class DriverMysql implements DriverInterface
         $result = mysql_query($sql);
 
         if (!$result) {
-            $msg = 'MySQL Error: ' . mysql_error() . "\nQuery: $sql";
+            $msg = 'MySQL Error: ' . mysql_error() . PHP_EOL . "Query: $sql" . PHP_EOL . "Database: {$this->getDatabaseSelected()}";
             throw new \PHPSchemaManager\Exceptions\MysqlException($msg);
         }
 
@@ -205,9 +205,6 @@ class DriverMysql implements DriverInterface
                     break;
                 case \PHPSchemaManager\Objects\Table::ACTIONCREATE:
                     $this->createTable($table);
-
-                    // after creating the table, refresh the Indexes, because of the SERIAL type
-                    $this->getIndexes($table);
                     $table->persisted();
                     break;
                 case \PHPSchemaManager\Objects\Table::ACTIONDELETE:
@@ -502,24 +499,8 @@ class DriverMysql implements DriverInterface
                 $index->destroy();
             } elseif ($index->shouldCreate()) {
                 // check if the index should be created
-                $columns = array();
-                foreach ($index->getColumns() as $column) {
-                    $columns[] = "$column";
-                }
-                $columnsString = implode(", ", $columns);
-
-                // check if it is a unique key
-                $unique = $index->isUniqueKey() ? "UNIQUE " : "";
-
-                $instruction[$i] = "ADD ";
-
-                if ($index->isPrimaryKey()) {
-                    $instruction[$i] .= "PRIMARY KEY";
-                } else {
-                    $instruction[$i] .= "{$unique}INDEX $index";
-                }
-
-                $instruction[$i] .= "($columnsString)" . PHP_EOL;
+                
+                $instruction[$i] = "ADD " . $this->tableIndexesInstructions($index);
             }
 
             $i++;
@@ -573,6 +554,43 @@ class DriverMysql implements DriverInterface
         return $fkInstruction;
     }
 
+    protected function tableIndexesInstructions(\PHPSchemaManager\Objects\Index $index) {
+        $instruction = '';
+
+        if ($index->isPrimaryKey()) {
+            /** @var $column \PHPSchemaManager\Objects\Column */
+            $column = $index->getColumns();
+            $column = $column[0];
+            if ($column->getType() != \PHPSchemaManager\Objects\Column::SERIAL) {
+                $instruction .= "PRIMARY KEY";
+            }
+        } else {
+            // check if it is a unique key
+            $unique = $index->isUniqueKey() ? "UNIQUE " : "";
+            $instruction .= "{$unique}INDEX $index";
+        }
+        
+        if (!empty($instruction)) {            
+            $columnsString = $index->getColumnsList();
+            $instruction .= "($columnsString)";
+        }
+        
+        return $instruction;
+    }
+    
+    protected function createTableIndexesInstruction(\PHPSchemaManager\Objects\Table $table) {
+        $idxSql = "";
+        foreach ($table->getIndexes() as $index) {
+            /** @var $index \PHPSchemaManager\Objects\Index */
+            if ($aux = $this->tableIndexesInstructions($index)) {
+                $idxSql .= $aux . "," . PHP_EOL;
+            }
+        }
+        $idxSql = substr($idxSql, 0, -1 * (strlen("," . PHP_EOL)));
+        $idxSql = empty($idxSql) ? "" : "$idxSql," . PHP_EOL;
+        return $idxSql;
+    }
+    
     protected function getReferenceOptionDescription($referenceOption = null)
     {
         switch ($referenceOption) {
@@ -613,6 +631,9 @@ class DriverMysql implements DriverInterface
             $sql .= $col->getDataDefinition() . "," . PHP_EOL;
         }
 
+        // add indexes
+        $sql .= $this->createTableIndexesInstruction($table);
+        
         // get the instruction to create the foreign keys
         $fkSql = $this->tableForeignKeysInstruction($table);
         $fkSql = empty($fkSql) ? "" : "$fkSql," . PHP_EOL;

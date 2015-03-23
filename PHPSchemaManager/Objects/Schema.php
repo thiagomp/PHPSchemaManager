@@ -149,6 +149,17 @@ class Schema extends Objects implements FatherInterface, ObjectEventsInterface
         }
     }
 
+    public function informSynced() {
+        foreach ($this->getTables() as $table) {
+            /* @var $table \PHPSchemaManager\Objects\Table */
+            if (!$table->isSynced()) {
+                $this->informChange();
+                break;
+            }
+        }
+    }
+
+
     public function onDelete()
     {
         foreach ($this->getTables() as $table) {

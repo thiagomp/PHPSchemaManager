@@ -1,5 +1,4 @@
 <?php
-require_once('PHPUnit/Autoload.php');
 
 class ManagerTest
   extends PHPUnit_Framework_TestCase {
@@ -272,7 +271,7 @@ class ManagerTest
     $bookTable = $s->hasTable('book');
     $this->assertInstanceOf('\PHPSchemaManager\Objects\Table', $bookTable, "Failed to find the book table");
 
-    // add the new Column to the users table
+    // add the new Column to the book table
     $bookTable->addColumn($column);
 
     // Check if the Column title exists before the flush
@@ -628,6 +627,8 @@ class ManagerTest
     $columnReview->setType(\PHPSchemaManager\Objects\Column::TEXT);
 
     $indexReviewerId = new \PHPSchemaManager\Objects\Index('idxReviewerId');
+    $indexReviewerId->addColumn($columnReviewerId);
+    $indexReviewerId->setAsUniqueKey();
 
     $reviewTable->addColumn($columnReviewId);
     $reviewTable->addColumn($columnReviewerId);
@@ -651,9 +652,11 @@ class ManagerTest
     $columnResourceCost->setSize("6,2");
 
     $indexResourceName = new \PHPSchemaManager\Objects\Index('idxResourceName');
+    $indexResourceName->addColumn($columnResourceName);
+    $indexResourceName->setAsUniqueKey();
 
     $resourceTable->addColumn($columnResourceId);
-    $resourceTable->addColumn($columnReviewerId);
+    $resourceTable->addColumn($columnResourceName);
     $resourceTable->addColumn($columnReview);
     $resourceTable->addIndex($indexResourceName);
 

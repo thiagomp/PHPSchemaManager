@@ -7,6 +7,7 @@
       <file>tests/Objects/TableTest.php</file>
       <file>tests/Objects/SchemaTest.php</file>
       <file>tests/Objects/ManagerTest.php</file>
+      <file>tests/Objects/IndexTest.php</file>
     </testsuite>
   </testsuites>
 </phpunit>

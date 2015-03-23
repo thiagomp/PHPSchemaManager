@@ -1,5 +1,4 @@
 <?php
-require_once('PHPUnit/Autoload.php');
 
 /**
  * Description of TableTest
@@ -104,24 +103,48 @@ class TableTest
             'the customerId field is expected to ignore when a deletion is onde');
     }
 
-      public function testTableEngine() {
-          $authorId = new \PHPSchemaManager\Objects\Column('id');
-          $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+    public function testTableEngine() {
+        $authorId = new \PHPSchemaManager\Objects\Column('id');
+        $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
 
-          $authorName = new \PHPSchemaManager\Objects\Column('name');
-          $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
-          $authorName->setSize(100);
+        $authorName = new \PHPSchemaManager\Objects\Column('name');
+        $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+        $authorName->setSize(100);
 
-          $authorTable = new \PHPSchemaManager\Objects\Table('author');
-          $authorTable->addColumn($authorId);
-          $authorTable->addColumn($authorName);
+        $authorTable = new \PHPSchemaManager\Objects\Table('author');
+        $authorTable->addColumn($authorId);
+        $authorTable->addColumn($authorName);
 
-          $specifics = new \PHPSchemaManager\Drivers\TableSpecificMysql();
-          $specifics->markAsInnoDb();
+        $specifics = new \PHPSchemaManager\Drivers\TableSpecificMysql();
+        $specifics->markAsInnoDb();
 
-          $authorTable->addSpecificConfiguration($specifics);
+        $authorTable->addSpecificConfiguration($specifics);
 
-          $this->assertEquals(1, count($authorTable->getSpecificsConfiguration()));
-          $this->assertTrue($specifics->isInnoDb());
-      }
+        $this->assertEquals(1, count($authorTable->getSpecificsConfiguration()));
+        $this->assertTrue($specifics->isInnoDb());
+    }
+    
+    /**
+     * Scenario:
+     * GIVEN a Index that doesn't have any columns associated to it
+     * WHEN the given Index is added to a Table
+     * THEN the Table will trigger an Exception
+     * 
+     * @expectedException \PHPSchemaManager\Exceptions\TableException
+     */
+    public function testAddIndexWithoutColumn() {
+        $index = new \PHPSchemaManager\Objects\Index('unitTestIndex');
+        
+        $authorId = new \PHPSchemaManager\Objects\Column('id');
+        $authorId->setType(\PHPSchemaManager\Objects\Column::SERIAL);
+
+        $authorName = new \PHPSchemaManager\Objects\Column('name');
+        $authorName->setType(\PHPSchemaManager\Objects\Column::VARCHAR);
+        $authorName->setSize(100);
+
+        $authorTable = new \PHPSchemaManager\Objects\Table('author');
+        $authorTable->addColumn($authorId);
+        $authorTable->addColumn($authorName);
+        $authorTable->addIndex($index);
+    }
 }

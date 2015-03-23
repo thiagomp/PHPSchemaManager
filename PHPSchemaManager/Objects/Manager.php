@@ -271,6 +271,10 @@ class Manager extends Objects implements FatherInterface
             $this->removeSchema($object);
         }
     }
+    
+    public function informSynced() {
+        // do nothing
+    }
     ## End of the iFather methods
 
     protected function removeSchema(Schema $schema)

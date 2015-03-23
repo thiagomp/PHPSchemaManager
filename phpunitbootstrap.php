@@ -16,6 +16,9 @@ $sm->setIgnoredSchemas(array('information_schema', 'performance_schema', 'mysql'
 echo "INFO: {$conn->dbms} {$sm->getDatabaseVersion()}" . PHP_EOL;
 
 if ($s = $sm->hasSchema('PHPSchemaManagerTest')) {
+  /* @var $s \PHPSchemaManager\Objects\Schema */
+    $s->drop();$s->flush();
+    /*
   // make sure that none of the tables that will be used in the test exists
   if ($s->hasTable("book")) {
     $s->dropTable("book");
@@ -28,6 +31,8 @@ if ($s = $sm->hasSchema('PHPSchemaManagerTest')) {
   }
   
   echo "INFO: schema $s has " . $s->countTables() . " tables" . PHP_EOL;
+     * 
+     */
 }
  
 if ($s = $sm->hasSchema('Library')) {

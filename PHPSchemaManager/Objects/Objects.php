@@ -79,6 +79,11 @@ class Objects
     {
         if (!$this->shouldDelete() || !$this->isDeleted()) {
             $this->setAction(self::STATUSSYNCED);
+            
+            // in case this object have a father, inform him your synced
+            if ($father = $this->getFather()) {
+                $father->informSynced();
+            }
         }
     }
 

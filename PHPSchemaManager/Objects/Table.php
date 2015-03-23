@@ -28,7 +28,7 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
     public function addColumn(Column $column)
     {
 
-        // Before create, check if the table is still on the tables class variable
+        // Before create, check if the column is still on the tables class variable
         // in case it is, cause a flush, then, create the table
         // This situation might happen when the user marked a table for deletion and
         // tries to create a table with the same name before sending a flush
@@ -108,6 +108,13 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
     public function addIndex(Index $index)
     {
 
+        // Check if the index has at least one column in it.
+        if (1 > $index->countColumns()) {
+            $msg = "Invalid Index association. Indexes must have at least one "
+                    ."column before adding them to a table";
+            throw new \PHPSchemaManager\Exceptions\TableException($msg);
+        }
+        
         /* @var $oldIndex \PHPSchemaManager\Objects\Index */
         $oldIndex = $this->trulyHasObject($index);
 
@@ -139,7 +146,9 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
 
     public function getIndexes()
     {
-        return $this->indexes;
+				// Regenerates the index to start always from zero
+				//TODO take into consideration the order of the indexes in the database
+        return array_values($this->indexes);
     }
 
     /**
@@ -214,6 +223,25 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
             $this->removeIndex($object);
         }
     }
+    
+    public function informSynced()
+    {
+        foreach ($this->getColumns() as $column) {
+            /* @var $column \PHPSchemaManager\Objects\Column */
+            if (!$column->isSynced()) {
+                $this->informChange();
+                return;
+            }
+        }
+        
+        foreach ($this->getIndexes() as $index) {
+            /* @var $index \PHPSchemaManager\Objects\Index */
+            if (!$index->isSynced()) {
+                $this->informChange();
+                break;
+            }
+        }
+    }
 
     public function onDelete()
     {
@@ -246,6 +274,9 @@ class Table extends Objects implements FatherInterface, ObjectEventsInterface
         $this->persistColumns();
         $this->persistIndexes();
         parent::persisted();
+        if ($father = $this->getFather()) {
+            $father->persisted();
+        }
     }
 
     public function countColumns()
